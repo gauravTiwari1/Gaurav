@@ -1,0 +1,2902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>CureLink — Smart Healthcare v20</title>
+<!-- Firebase via ESM module — most reliable method, no race condition -->
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getDatabase,ref,set,get,onValue,push,remove,child}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+try{
+  const _app=initializeApp({
+    apiKey:"AIzaSyDoK_cTafNA6Ssya8IVFSbj85C3P1zb4OQ",
+    authDomain:"curelink-703e5.firebaseapp.com",
+    databaseURL:"https://curelink-703e5-default-rtdb.firebaseio.com",
+    projectId:"curelink-703e5",
+    storageBucket:"curelink-703e5.firebasestorage.app",
+    messagingSenderId:"869559856287",
+    appId:"1:869559856287:web:4acb4dc7e66cf04ce886aa"
+  });
+  const _db=getDatabase(_app);
+  // Expose helpers on window so Babel script can use them
+  window._fb={
+    db:_db,
+    ref:(path)=>ref(_db,path),
+    set,get,onValue,push,remove,child,
+    ready:true
+  };
+  console.log("🔥 Firebase ESM ready — curelink-703e5");
+}catch(e){
+  console.warn("Firebase failed:",e.message);
+  window._fb={ready:false};
+}
+</script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#f6f4ff;color:#1e1535;min-height:100vh;-webkit-tap-highlight-color:transparent}
+#root{min-height:100vh}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#ede9fe}::-webkit-scrollbar-thumb{background:linear-gradient(#7c3aed,#a855f7);border-radius:4px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes slideIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes glow{0%,100%{box-shadow:0 0 18px rgba(124,58,237,.18)}50%{box-shadow:0 0 32px rgba(124,58,237,.35)}}
+.fu{animation:fadeUp .5s cubic-bezier(.22,1,.36,1) both}
+.float{animation:float 3.5s ease-in-out infinite}
+/* ── Inputs ── */
+.inp{width:100%;background:#fff;border:1.5px solid #ddd6fe;border-radius:12px;padding:12px 15px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;color:#1e1535;outline:none;transition:all .2s;-webkit-appearance:none;box-shadow:0 1px 4px rgba(124,58,237,.06)}
+.inp::placeholder{color:#a78bfa}
+.inp:focus{border-color:#7c3aed;background:#fefcff;box-shadow:0 0 0 3.5px rgba(124,58,237,.12)}
+.inp option{background:#fff;color:#1e1535}
+/* ── Buttons ── */
+.btn-v{background:linear-gradient(135deg,#7c3aed 0%,#a855f7 100%);color:#fff;border:none;border-radius:12px;padding:12px 22px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .22s;touch-action:manipulation;box-shadow:0 4px 18px rgba(124,58,237,.38)}
+.btn-v:hover{transform:translateY(-2px);box-shadow:0 7px 24px rgba(124,58,237,.52)}
+.btn-v:active{transform:scale(.97)}
+.btn-v:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;transform:none}
+.btn-g{background:linear-gradient(135deg,#059669 0%,#0891b2 100%);color:#fff;border:none;border-radius:12px;padding:12px 22px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .22s;touch-action:manipulation;box-shadow:0 4px 18px rgba(5,150,105,.35)}
+.btn-g:hover{transform:translateY(-2px);box-shadow:0 7px 24px rgba(5,150,105,.5)}
+.btn-g:active{transform:scale(.97)}
+.btn-g:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;transform:none}
+.btn-ghost{background:#fff;color:#7c3aed;border:1.5px solid #ddd6fe;border-radius:10px;padding:10px 18px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all .2s;touch-action:manipulation}
+.btn-ghost:hover{background:#faf5ff;border-color:#a78bfa;color:#6d28d9}
+.btn-ghost:active{transform:scale(.98)}
+.btn-red{background:#fff1f2;color:#e11d48;border:1.5px solid #fecdd3;border-radius:8px;padding:7px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:12px;cursor:pointer;transition:all .2s}
+.btn-red:hover{background:#ffe4e6}
+/* ── Tags ── */
+.tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px}
+.tag-v{background:linear-gradient(135deg,#ede9fe,#f3e8ff);color:#6d28d9;border:1px solid #ddd6fe}
+.tag-g{background:linear-gradient(135deg,#d1fae5,#ccfbf1);color:#065f46;border:1px solid #a7f3d0}
+.tag-r{background:#fff1f2;color:#be123c;border:1px solid #fecdd3}
+.tag-b{background:#e0f7fe;color:#0e7490;border:1px solid #bae6fd}
+.tag-y{background:#fef9c3;color:#92400e;border:1px solid #fde68a}
+/* ── Sidebar Nav ── */
+.nav{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:11px;cursor:pointer;font-weight:500;font-size:13px;color:#6b7280;transition:all .18s;margin-bottom:3px;touch-action:manipulation}
+.nav:hover{background:#f3f0ff;color:#6d28d9}
+.nav.onV{background:linear-gradient(135deg,#ede9fe,#f3e8ff);color:#5b21b6;border:1.5px solid #ddd6fe;font-weight:700;box-shadow:0 2px 10px rgba(124,58,237,.12)}
+.nav.onG{background:linear-gradient(135deg,#d1fae5,#ccfbf1);color:#065f46;border:1.5px solid #a7f3d0;font-weight:700;box-shadow:0 2px 10px rgba(5,150,105,.12)}
+/* ── Labels ── */
+.lbl{font-size:10px;font-weight:800;color:#a78bfa;letter-spacing:1.4px;display:block;margin-bottom:6px;text-transform:uppercase}
+/* ── Cards ── */
+.card{background:#fff;border:1.5px solid #ede9fe;border-radius:18px;padding:18px;position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(124,58,237,.08),0 1px 3px rgba(0,0,0,.04)}
+.card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#7c3aed,#06b6d4,#10b981)}
+.dr-card{background:#fff;border:1.5px solid #ede9fe;border-radius:18px;padding:18px;transition:all .26s;cursor:pointer;position:relative;overflow:hidden;touch-action:manipulation;box-shadow:0 3px 14px rgba(124,58,237,.07)}
+.dr-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2.5px;background:linear-gradient(90deg,#7c3aed,#06b6d4)}
+.dr-card:hover{border-color:#c4b5fd;box-shadow:0 12px 32px rgba(124,58,237,.16);transform:translateY(-4px)}
+.dr-card:active{transform:scale(.99)}
+.dr-card.off{opacity:.5;cursor:not-allowed}
+.dr-card.off:hover{transform:none;box-shadow:0 3px 14px rgba(124,58,237,.07)}
+/* ── Rows / Stats ── */
+.row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#fff;border:1.5px solid #ede9fe;border-radius:14px;margin-bottom:9px;flex-wrap:wrap;gap:9px;box-shadow:0 2px 8px rgba(124,58,237,.06)}
+.stat{background:#fff;border:1.5px solid #ede9fe;border-radius:16px;padding:16px;text-align:center;box-shadow:0 3px 12px rgba(124,58,237,.08)}
+/* ── Overlay / Modal ── */
+.overlay{position:fixed;inset:0;background:rgba(30,21,53,.42);backdrop-filter:blur(10px);z-index:1000;display:flex;align-items:flex-end;justify-content:center;padding:0;animation:fadeIn .2s ease}
+.modal{background:#fff;border:1.5px solid #ede9fe;border-radius:24px 24px 0 0;padding:26px 20px;width:100%;max-height:92vh;overflow-y:auto;animation:slideUp .32s cubic-bezier(.22,1,.36,1);box-shadow:0 -8px 40px rgba(124,58,237,.14)}
+@media(min-width:640px){
+  .overlay{align-items:center;padding:18px}
+  .modal{border-radius:24px;max-width:560px;animation:fadeUp .3s cubic-bezier(.22,1,.36,1);box-shadow:0 24px 70px rgba(124,58,237,.18)}
+}
+/* ── Orb ── */
+.orb{position:absolute;border-radius:50%;filter:blur(65px);pointer-events:none;opacity:.55}
+/* ── Slot chips ── */
+.slot-chip{border:1.5px solid #ddd6fe;background:#faf5ff;color:#6d28d9;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:700;cursor:pointer;transition:all .18s;font-family:'Plus Jakarta Sans',sans-serif;touch-action:manipulation}
+.slot-chip:hover:not([disabled]){background:#ede9fe;border-color:#a78bfa}
+.slot-chip.booked{background:#fff1f2;border-color:#fecdd3;color:#be123c;cursor:default}
+.slot-chip.wl-join{background:#fef9c3;border-color:#fde68a;color:#92400e;cursor:pointer}
+.slot-chip.wl-join:hover{background:#fef3c7}
+.slot-chip.sel{background:linear-gradient(135deg,#7c3aed,#a855f7);border-color:#7c3aed;color:#fff;box-shadow:0 4px 16px rgba(124,58,237,.4)}
+.slot-chip.mywl{background:#fef9c3;border-color:#f59e0b;color:#78350f;cursor:default}
+/* ── Time buttons ── */
+.time-btn{background:#f9fafb;border:1.5px solid #e5e7eb;color:#6b7280;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;font-family:'Plus Jakarta Sans',sans-serif;touch-action:manipulation}
+.time-btn:hover{border-color:#a7f3d0;color:#065f46;background:#f0fdf4}
+.time-btn.picked{background:linear-gradient(135deg,#d1fae5,#ccfbf1);border-color:#10b981;color:#065f46;box-shadow:0 2px 8px rgba(5,150,105,.18)}
+/* ── Toggle ── */
+.toggle{position:relative;width:46px;height:26px;display:inline-block;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.tsl{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#e5e7eb;border-radius:24px;transition:.28s}
+.tsl:before{position:absolute;content:"";height:18px;width:18px;left:4px;bottom:4px;background:#fff;border-radius:50%;transition:.28s;box-shadow:0 2px 5px rgba(0,0,0,.18)}
+input:checked+.tsl{background:linear-gradient(135deg,#10b981,#0891b2)}
+input:checked+.tsl:before{transform:translateX(20px)}
+/* ── Chat bubbles ── */
+.chat-user{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border-radius:16px 16px 3px 16px;padding:10px 14px;max-width:82%;align-self:flex-end;font-size:13.5px;line-height:1.62;white-space:pre-wrap;word-break:break-word;box-shadow:0 4px 14px rgba(124,58,237,.3)}
+.chat-ai{background:#f3f0ff;border:1.5px solid #ede9fe;color:#1e1535;border-radius:16px 16px 16px 3px;padding:10px 14px;max-width:88%;align-self:flex-start;font-size:13.5px;line-height:1.68;white-space:pre-wrap;word-break:break-word}
+/* ── Voice message bubble ── */
+.voice-bubble{display:flex;align-items:center;gap:8px;min-width:180px}
+.voice-bubble audio{height:28px;flex:1;outline:none;accent-color:#7c3aed}
+.voice-bubble audio::-webkit-media-controls-panel{background:transparent}
+.rec-btn{border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;font-size:17px;touch-action:manipulation}
+.rec-btn.idle{background:#f3f0ff;color:#7c3aed;border:1.5px solid #ddd6fe}
+.rec-btn.idle:hover{background:#ede9fe}
+.rec-btn.recording{background:linear-gradient(135deg,#e11d48,#be123c);color:#fff;animation:pulse 1s infinite;box-shadow:0 0 0 4px rgba(225,29,72,.18)}
+.rec-wave{display:flex;align-items:center;gap:2px;padding:0 4px}
+.rec-wave span{display:inline-block;width:3px;background:#e11d48;border-radius:2px;animation:wave .8s ease-in-out infinite}
+.rec-wave span:nth-child(1){height:8px;animation-delay:0s}
+.rec-wave span:nth-child(2){height:14px;animation-delay:.1s}
+.rec-wave span:nth-child(3){height:10px;animation-delay:.2s}
+.rec-wave span:nth-child(4){height:16px;animation-delay:.3s}
+.rec-wave span:nth-child(5){height:8px;animation-delay:.4s}
+@keyframes wave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.7)}}
+.vc-btn{background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:9px;padding:6px 12px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;touch-action:manipulation;box-shadow:0 2px 8px rgba(8,145,178,.3)}
+.vc-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(8,145,178,.45)}
+/* ── Notification popup ── */
+.notif{position:fixed;bottom:80px;right:14px;left:14px;z-index:2000;background:#fff;border:1.5px solid #ddd6fe;border-radius:20px;padding:18px;box-shadow:0 16px 50px rgba(124,58,237,.2);animation:slideIn .45s cubic-bezier(.22,1,.36,1)}
+@media(min-width:480px){.notif{left:auto;width:340px}}
+/* ══════ MOBILE BOTTOM NAV ══════ */
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.92);border-top:1.5px solid #ede9fe;z-index:500;padding:6px 0 env(safe-area-inset-bottom,6px);gap:0;box-shadow:0 -4px 20px rgba(124,58,237,.1);backdrop-filter:blur(16px);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+@media(max-width:767px){
+  .mob-nav{display:flex}
+  .side-nav{display:none !important}
+  .main-content{margin-left:0 !important;padding:14px 14px 80px !important}
+  .dash-wrap{flex-direction:column !important}
+  .top-header{padding:14px 14px 0 !important}
+  .login-split{flex-direction:column !important}
+  .login-left{display:none !important}
+  .login-right{padding:20px 16px !important;width:100% !important}
+  .landing-cards{flex-direction:column !important;gap:14px !important}
+  .landing-card{max-width:100% !important;flex:none !important;padding:24px 20px !important}
+  .stats-grid{grid-template-columns:1fr 1fr !important}
+  .dr-grid{grid-template-columns:1fr !important}
+  .modal{padding:20px 16px}
+  .form-grid-2{grid-template-columns:1fr !important}
+  .slot-grid{gap:5px !important}
+}
+.mob-nav-btn{flex:0 0 auto;min-width:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;background:none;border:none;color:#c4b5fd;font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:600;gap:3px;cursor:pointer;transition:all .18s;touch-action:manipulation;position:relative}
+.mob-nav-btn.actV{color:#6d28d9}
+.mob-nav-btn.actG{color:#059669}
+.mob-nav-btn .badge{position:absolute;top:4px;right:calc(50% - 14px);background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border-radius:10px;padding:1px 5px;font-size:9px;font-weight:800}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+// Wait for Firebase to be ready before running app
+if(!window._fbdb && !window._fbReady){
+  // Firebase not yet init — set a safe fallback so FB layer works offline
+  window._fbReady = false;
+}
+const{useState,useEffect,useRef,useCallback,useMemo}=React;
+
+const SPECS=["Cardiologist","Dermatologist","Neurologist","Orthopedic","Pediatrician","Gynecologist","ENT Specialist","Psychiatrist","General Physician","Dentist"];
+const ALL_TIMES=["08:00 AM","08:30 AM","09:00 AM","09:30 AM","10:00 AM","10:30 AM","11:00 AM","11:30 AM","12:00 PM","12:30 PM","01:00 PM","01:30 PM","02:00 PM","02:30 PM","03:00 PM","03:30 PM","04:00 PM","04:30 PM","05:00 PM","05:30 PM","06:00 PM","06:30 PM","07:00 PM","07:30 PM"];
+const QUOTES=["To cure sometimes, to relieve often, to comfort always.","The good physician treats the disease; the great treats the patient.","Medicine is both a science and an art of humanity.","Wherever there is love for the patient, there is love for the art."];
+const DUMMY_DOCS=[
+  {id:"NMC20001",name:"Dr. Rajesh Kumar",spec:"General Physician",age:52,city:"Phagwara",state:"Punjab",fees:300,quote:"Your health is my priority — always.",hospital:"Kumar Medical Centre",hospitalAddress:"Near Civil Hospital, GT Road",slots:["09:00 AM","09:30 AM","10:00 AM","10:30 AM","11:00 AM","11:30 AM","04:00 PM","04:30 PM","05:00 PM","05:30 PM"],bk:[],apts:[],waitlist:{},on:true,email:"",phone:""},
+  {id:"NMC20003",name:"Dr. Amandeep Singh",spec:"Orthopedic",age:48,city:"Phagwara",state:"Punjab",fees:600,quote:"Moving you towards a pain-free life.",hospital:"Singh Ortho Clinic",hospitalAddress:"Bus Stand Road, Phagwara",slots:["09:00 AM","09:30 AM","10:00 AM","10:30 AM","02:00 PM","02:30 PM","03:00 PM","03:30 PM","04:00 PM"],bk:[],apts:[],waitlist:{},on:true,email:"",phone:""},
+  {id:"NMC20005",name:"Dr. Harpreet Kaur",spec:"Dermatologist",age:38,city:"Phagwara",state:"Punjab",fees:450,quote:"Healthy skin is a reflection of overall wellness.",hospital:"Kaur Skin & Hair Clinic",hospitalAddress:"Shaheed Bhagat Singh Nagar, Phagwara",slots:["10:00 AM","10:30 AM","11:00 AM","11:30 AM","12:00 PM","03:00 PM","03:30 PM","04:00 PM","04:30 PM"],bk:[],apts:[],waitlist:{},on:true,email:"",phone:""},
+  {id:"NMC20006",name:"Dr. Vikram Malhotra",spec:"Cardiologist",age:55,city:"Phagwara",state:"Punjab",fees:800,quote:"A healthy heart is the foundation of a happy life.",hospital:"Malhotra Heart Care",hospitalAddress:"Model Town, Phagwara",slots:["09:00 AM","09:30 AM","10:00 AM","02:00 PM","02:30 PM","03:00 PM","05:00 PM","05:30 PM"],bk:[],apts:[],waitlist:{},on:true,email:"",phone:""},
+  {id:"NMC20010",name:"Dr. Simran Arora",spec:"Psychiatrist",age:43,city:"Phagwara",state:"Punjab",fees:550,quote:"Mental health is just as important as physical health.",hospital:"Arora Mind Wellness Clinic",hospitalAddress:"Jalandhar Bypass, Phagwara",slots:["11:00 AM","11:30 AM","12:00 PM","04:00 PM","04:30 PM","05:00 PM","05:30 PM"],bk:[],apts:[],waitlist:{},on:true,email:"",phone:""}
+];
+const LS={
+  get:(k,fb=null)=>{try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):fb;}catch{return fb;}},
+  set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}},
+  del:(k)=>{try{localStorage.removeItem(k);}catch{}}
+};
+
+/* ══════════════════════════════════════════
+   📹 DAILY.CO VIDEO CALL INTEGRATION
+   Real-time video calls via Daily.co API
+   ══════════════════════════════════════════ */
+const DAILY_API_KEY = "56bb36ad804c4e8e850d440ba91cef94";
+const DAILY_DOMAIN  = "https://api.daily.co/v1";
+
+async function createDailyRoom(roomSuffix){
+  const name = "curelink-" + roomSuffix + "-" + Math.random().toString(36).slice(2,7);
+  try{
+    const res = await fetch(DAILY_DOMAIN + "/rooms", {
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+DAILY_API_KEY},
+      body: JSON.stringify({
+        name,
+        privacy:"private",
+        properties:{
+          exp: Math.round(Date.now()/1000) + 3600,  // 1 hour expiry
+          enable_chat: true,
+          enable_screenshare: true,
+          start_video_off: false,
+          start_audio_off: false,
+          lang: "en"
+        }
+      })
+    });
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err?.info || "Daily.co API error "+res.status);
+    }
+    const data = await res.json();
+    return { url: data.url, name: data.name };
+  }catch(e){
+    console.error("Daily.co room creation failed:", e.message);
+    throw e;
+  }
+}
+const patientKey=email=>email?.toLowerCase().replace(/\./g,"_").replace(/@/g,"__at__")||"";
+/* ══════════════════════════════════════════════
+   🔥 FIREBASE SYNC LAYER — CureLink v2
+   Uses window._fb set by ESM module above.
+   Falls back to localStorage if Firebase unavailable.
+
+   Directory: /curelink
+     /doctors/{nmcId}    — doctor data
+     /users/{emailKey}   — patient data
+     /freed/{ts}         — waitlist slot alerts (auto-delete 25s)
+     /meta/lastUpdated   — last write timestamp
+   ══════════════════════════════════════════════ */
+const FB=(()=>{
+  // Poll for ESM module to finish (it runs async)
+  let _w=window._fb||{ready:false};
+  const ROOT="curelink";
+  const ok=()=>!!(window._fb&&window._fb.ready);
+  const db=()=>window._fb&&window._fb.db;
+  const fbRef=(path)=>window._fb.ref(path);
+  const emailKey=e=>e.toLowerCase().replace(/\./g,"_").replace(/@/g,"__at__");
+  const stamp=()=>{if(ok())window._fb.set(fbRef(ROOT+"/meta/lastUpdated"),Date.now());};
+
+  // Connection monitor
+  if(typeof window!=="undefined"){
+    const poll=setInterval(()=>{
+      if(window._fb&&window._fb.ready){
+        clearInterval(poll);
+        window._fb.onValue(fbRef(".info/connected"),s=>{
+          console.log("🔥 Firebase network:",(s.val()?"ONLINE ✅":"OFFLINE ❌"));
+        });
+        console.log("🔥 FB layer active — project: curelink-703e5");
+      }
+    },100);
+  }
+
+  return {
+    get ok(){return ok();},
+
+    // ── DOCTORS ──
+    saveDoc(doc){
+      if(!ok())return;
+      window._fb.set(fbRef(`${ROOT}/doctors/${doc.id}`),{...doc,_updated:Date.now()});
+      stamp();
+    },
+    saveDocs(docs){
+      if(!ok())return;
+      docs.forEach(d=>this.saveDoc(d));
+    },
+    loadDocs(){
+      if(!ok())return Promise.resolve(null);
+      return window._fb.get(fbRef(`${ROOT}/doctors`))
+        .then(s=>{const v=s.val();return v?Object.values(v):null;})
+        .catch(()=>null);
+    },
+    onDocs(cb){
+      if(!ok())return()=>{};
+      const r=fbRef(`${ROOT}/doctors`);
+      const unsub=window._fb.onValue(r,s=>{const v=s.val();if(v)cb(Object.values(v));});
+      return unsub;
+    },
+
+    // ── USERS ──
+    saveUser(u){
+      if(!u?.email)return;
+      const path=`${ROOT}/users/${emailKey(u.email)}`;
+      const payload={...u,_updated:Date.now()};
+      this._fbREST(path,"PATCH",payload);
+      if(!ok())return;
+      window._fb.get(fbRef(path))
+        .then(s=>window._fb.set(fbRef(path),{...(s.val()||{}),...payload}))
+        .catch(()=>window._fb.set(fbRef(path),payload));
+    },
+    loadUser(email){
+      if(!ok())return Promise.resolve(null);
+      return window._fb.get(fbRef(`${ROOT}/users/${emailKey(email)}`))
+        .then(s=>s.val()).catch(()=>null);
+    },
+
+    // ── FREED SLOTS ──
+    pushFreed(ev){
+      if(!ok())return;
+      window._fb.set(fbRef(`${ROOT}/freed/${ev.ts}`),{...ev,_created:Date.now()});
+      setTimeout(()=>window._fb.remove(fbRef(`${ROOT}/freed/${ev.ts}`)),25000);
+    },
+    onFreed(cb){
+      if(!ok())return()=>{};
+      const r=fbRef(`${ROOT}/freed`);
+      const unsub=window._fb.onValue(r,s=>{
+        const v=s.val();
+        if(!v)return;
+        Object.values(v).forEach(ev=>{
+          if(ev&&Date.now()-(ev._created||0)<20000)cb(ev);
+        });
+      });
+      return unsub;
+    },
+
+    status(){
+      console.table({
+        "Firebase ESM":ok()?"✅ Ready":"❌ Not ready",
+        "Project":"curelink-703e5",
+        "Root node":ROOT,
+      });
+    },
+    ek:emailKey,
+    // ── CHAT: stored under users/{emailKey}/chats/{drId}/ (users path is proven writable) ──
+    saveMsg(patEmailKey,drId,msg,patMeta=null){
+      const path=`${ROOT}/users/${patEmailKey}/chats/${drId}/${msg.id}`;
+      const payload={...msg,_ts:Date.now()};
+      // Voice messages have large base64 audio — skip REST (too large), use ESM only
+      if(msg.type==="voice"){
+        // Save a lightweight stub via REST so REST-polling picks it up
+        const stub={...msg,audioData:"",_stub:true,_ts:Date.now()};
+        this._fbREST(path,"PUT",stub);
+        // Full payload (with audio) via ESM Firebase which handles large data
+        const saveVoice=()=>{
+          if(ok()){window._fb.set(fbRef(path),payload);}
+          else{setTimeout(saveVoice,300);}
+        };
+        saveVoice();
+      }else{
+        this._fbREST(path,"PUT",payload);
+        if(ok())window._fb.set(fbRef(path),payload);
+      }
+      if(patMeta?.email)this.saveChatParticipant(drId,patMeta);
+    },
+    onMsgs(patEmailKey,drId,cb){
+      const DB_URL="https://curelink-703e5-default-rtdb.firebaseio.com";
+      const path=`${ROOT}/users/${patEmailKey}/chats/${drId}`;
+      let lastHash="";
+      const toArr=v=>v?Object.values(v).sort((a,b)=>a.ts-b.ts):[];
+      // ── REST polling (works without ESM — fires every 2.5s) ──
+      const restPoll=setInterval(()=>{
+        fetch(`${DB_URL}/${path}.json`)
+          .then(r=>r.json())
+          .then(v=>{
+            if(!v)return;
+            const h=Object.keys(v).join(",");
+            if(h===lastHash)return;
+            lastHash=h;
+            // Merge: REST stubs replaced by full ESM data if available
+            cb(toArr(v));
+          }).catch(()=>{});
+      },2500);
+      // ── ESM real-time listener (instant updates when Firebase loaded) ──
+      let unsub=()=>{};
+      const connectESM=()=>{
+        if(!ok())return;
+        try{
+          unsub=window._fb.onValue(fbRef(path),s=>{
+            const v=s.val();
+            const arr=toArr(v);
+            lastHash=v?Object.keys(v).join(","):"";
+            cb(arr);
+          });
+        }catch(e){}
+      };
+      if(ok())connectESM();
+      else{
+        let tries=0;
+        const p=setInterval(()=>{
+          tries++;
+          if(ok()){clearInterval(p);connectESM();}
+          else if(tries>60)clearInterval(p);
+        },250);
+      }
+      return()=>{clearInterval(restPoll);try{unsub();}catch(e){}};
+    },
+    saveChatParticipant(drId,pat){
+      if(!drId||!pat?.email)return;
+      const key=emailKey(pat.email);
+      const path=`${ROOT}/chat_participants/${drId}/${key}`;
+      const payload={email:pat.email,name:pat.name||pat.email,phone:pat.phone||"",lastActive:Date.now()};
+      this._fbREST(path,"PATCH",payload);
+      if(ok())window._fb.set(fbRef(path),payload);
+    },
+    onChatParticipants(drId,cb){
+      const DB_URL="https://curelink-703e5-default-rtdb.firebaseio.com";
+      const path=`${ROOT}/chat_participants/${drId}`;
+      let lastHash="";
+      // REST polling fallback
+      const restPoll=setInterval(()=>{
+        fetch(`${DB_URL}/${path}.json`)
+          .then(r=>r.json())
+          .then(v=>{
+            if(!v)return;
+            const h=Object.keys(v).join(",");
+            if(h===lastHash)return;
+            lastHash=h;
+            cb(Object.values(v).sort((a,b)=>(b.lastActive||0)-(a.lastActive||0)));
+          }).catch(()=>{});
+      },3000);
+      // ESM real-time listener
+      let unsub=()=>{};
+      const connectESM=()=>{
+        if(!ok())return;
+        try{
+          unsub=window._fb.onValue(fbRef(path),s=>{
+            const v=s.val();
+            lastHash=v?Object.keys(v).join(","):"";
+            cb(v?Object.values(v).sort((a,b)=>(b.lastActive||0)-(a.lastActive||0)):[]);
+          });
+        }catch(e){}
+      };
+      if(ok())connectESM();
+      else{
+        let tries=0;
+        const p=setInterval(()=>{
+          tries++;
+          if(ok()){clearInterval(p);connectESM();}
+          else if(tries>60)clearInterval(p);
+        },250);
+      }
+      return()=>{clearInterval(restPoll);try{unsub();}catch(e){}};
+    },
+    // ── PRESCRIPTIONS: stored under users/{emailKey}/rxs/ ──
+    saveRx(patEmailKey,rx){
+      const path=`${ROOT}/users/${patEmailKey}/rxs/${rx.id}`;
+      const payload={...rx,_ts:Date.now()};
+      this._fbREST(path,"PUT",payload);
+      if(ok())window._fb.set(fbRef(path),payload);
+    },
+    onRxs(patEmailKey,cb){
+      if(!ok())return()=>{};
+      const r=fbRef(`${ROOT}/users/${patEmailKey}/rxs`);
+      const unsub=window._fb.onValue(r,s=>{const v=s.val();cb(v?Object.values(v).sort((a,b)=>a.ts-b.ts):[]);});
+      return unsub;
+    },
+    // ── HEALTH DATA: stored under users/{emailKey}/health/ ──
+    saveHealth(patEmailKey,entry){
+      const path=`${ROOT}/users/${patEmailKey}/health/${entry.id}`;
+      const payload={...entry,_ts:Date.now()};
+      this._fbREST(path,"PUT",payload);
+      if(ok())window._fb.set(fbRef(path),payload);
+    },
+    onHealth(patEmailKey,cb){
+      if(!ok())return()=>{};
+      const r=fbRef(`${ROOT}/users/${patEmailKey}/health`);
+      const unsub=window._fb.onValue(r,s=>{const v=s.val();cb(v?Object.values(v).sort((a,b)=>a.ts-b.ts):[]);});
+      return unsub;
+    },
+
+    // ── VIDEO CALL SIGNALING ──
+    saveCall(drId, patEmailKey, callerRole, callerName, roomName, dailyUrl){
+      const path=`${ROOT}/calls/${drId}_${patEmailKey}`;
+      const payload={callerRole,callerName,roomName,dailyUrl:dailyUrl||"",status:"ringing",ts:Date.now()};
+      this._fbREST(path,"PUT",payload);
+      if(ok())window._fb.set(fbRef(path),payload);
+    },
+    onCall(drId, patEmailKey, cb){
+      // Use REST polling as fallback + ESM listener
+      let lastData=null;
+      const path=`${ROOT}/calls/${drId}_${patEmailKey}`;
+      const restPoll=setInterval(()=>{
+        const DB_URL="https://curelink-703e5-default-rtdb.firebaseio.com";
+        fetch(`${DB_URL}/${path}.json`).then(r=>r.json()).then(v=>{
+          if(JSON.stringify(v)!==JSON.stringify(lastData)){lastData=v;cb(v);}
+        }).catch(()=>{});
+      },2000);
+      let unsub=()=>{};
+      if(ok()){
+        try{
+          unsub=window._fb.onValue(fbRef(path),s=>{const v=s.val();lastData=v;cb(v);});
+        }catch(e){}
+      }else{
+        const esmPoll=setInterval(()=>{
+          if(ok()){
+            clearInterval(esmPoll);
+            try{
+              unsub=window._fb.onValue(fbRef(path),s=>{const v=s.val();lastData=v;cb(v);});
+            }catch(e){}
+          }
+        },500);
+        setTimeout(()=>clearInterval(esmPoll),30000);
+      }
+      return()=>{clearInterval(restPoll);try{unsub();}catch(e){}};
+    },
+    onCallsForDoctor(drId, cb){
+      const path=`${ROOT}/calls`;
+      const prefix=drId+"_";
+      const DB_URL="https://curelink-703e5-default-rtdb.firebaseio.com";
+      let lastData=null;
+      const restPoll=setInterval(()=>{
+        fetch(`${DB_URL}/${path}.json`).then(r=>r.json()).then(v=>{
+          if(!v)return;
+          const calls=Object.entries(v).filter(([k])=>k.startsWith(prefix)).map(([k,val])=>({...val,_key:k}));
+          const ringing=calls.find(c=>c.status==="ringing"&&Date.now()-c.ts<65000);
+          if(ringing&&JSON.stringify(ringing)!==JSON.stringify(lastData)){lastData=ringing;cb(ringing);}
+        }).catch(()=>{});
+      },2000);
+      let unsub=()=>{};
+      const tryESM=()=>{
+        if(!ok())return;
+        try{
+          unsub=window._fb.onValue(fbRef(path),s=>{
+            const v=s.val();if(!v)return;
+            const calls=Object.entries(v).filter(([k])=>k.startsWith(prefix)).map(([k,val])=>({...val,_key:k}));
+            const ringing=calls.find(c=>c.status==="ringing"&&Date.now()-c.ts<65000);
+            if(ringing){lastData=ringing;cb(ringing);}
+          });
+        }catch(e){}
+      };
+      if(ok())tryESM();
+      else{const p=setInterval(()=>{if(ok()){clearInterval(p);tryESM();}},500);setTimeout(()=>clearInterval(p),30000);}
+      return()=>{clearInterval(restPoll);try{unsub();}catch(e){}};
+    },
+    onCallsForPatient(patEmailKey, cb){
+      const path=`${ROOT}/calls`;
+      const suffix="_"+patEmailKey;
+      const DB_URL="https://curelink-703e5-default-rtdb.firebaseio.com";
+      let lastData=null;
+      const restPoll=setInterval(()=>{
+        fetch(`${DB_URL}/${path}.json`).then(r=>r.json()).then(v=>{
+          if(!v)return;
+          const calls=Object.entries(v).filter(([k])=>k.endsWith(suffix)).map(([k,val])=>({...val,_key:k}));
+          const ringing=calls.find(c=>c.status==="ringing"&&c.callerRole==="doctor"&&Date.now()-c.ts<65000);
+          if(ringing&&JSON.stringify(ringing)!==JSON.stringify(lastData)){lastData=ringing;cb(ringing);}
+        }).catch(()=>{});
+      },2000);
+      let unsub=()=>{};
+      const tryESM=()=>{
+        if(!ok())return;
+        try{
+          unsub=window._fb.onValue(fbRef(path),s=>{
+            const v=s.val();if(!v)return;
+            const calls=Object.entries(v).filter(([k])=>k.endsWith(suffix)).map(([k,val])=>({...val,_key:k}));
+            const ringing=calls.find(c=>c.status==="ringing"&&c.callerRole==="doctor"&&Date.now()-c.ts<65000);
+            if(ringing){lastData=ringing;cb(ringing);}
+          });
+        }catch(e){}
+      };
+      if(ok())tryESM();
+      else{const p=setInterval(()=>{if(ok()){clearInterval(p);tryESM();}},500);setTimeout(()=>clearInterval(p),30000);}
+      return()=>{clearInterval(restPoll);try{unsub();}catch(e){}};
+    },
+    clearCall(drId, patEmailKey){
+      const path=`${ROOT}/calls/${drId}_${patEmailKey}`;
+      this._fbREST(path,"DELETE");
+      if(ok()){try{window._fb.remove(fbRef(path));}catch(e){}}
+    },
+    clearCallByKey(key){
+      const path=`${ROOT}/calls/${key}`;
+      this._fbREST(path,"DELETE");
+      if(ok()){try{window._fb.remove(fbRef(path));}catch(e){}}
+    },
+    // ── SOS: uses Firebase REST API directly — works even before ESM loads ──
+    // REST API doesn't need window._fb to be ready
+    _fbREST(path,method,data){
+      const DB_URL="https://curelink-703e5-default-rtdb.firebaseio.com";
+      const url=`${DB_URL}/${path}.json`;
+      return fetch(url,{
+        method:method||"PUT",
+        headers:{"Content-Type":"application/json"},
+        body:data!==undefined?JSON.stringify(data):undefined
+      }).catch(e=>console.warn("FB REST error:",e));
+    },
+    saveSOS(patEmailKey,sos){
+      const payload={...sos,_ts:sos.ts||Date.now(),savedAt:Date.now()};
+      // Write to 3 paths using REST API (no ESM dependency)
+      this._fbREST(`${ROOT}/sos_broadcast`,"PUT",payload);
+      this._fbREST(`${ROOT}/meta/sos_${patEmailKey}`,"PUT",payload);
+      this._fbREST(`${ROOT}/users/${patEmailKey}/sos`,"PUT",payload);
+      // Also try ESM if available
+      if(ok()){
+        try{window._fb.set(fbRef(`${ROOT}/sos_broadcast`),payload);}catch(e){}
+        try{window._fb.set(fbRef(`${ROOT}/meta/sos_${patEmailKey}`),payload);}catch(e){}
+      }
+    },
+    onSOS(cb){
+      const seenTs=new Set();
+      const handleSos=(sos)=>{
+        if(!sos)return;
+        const ts=sos._ts||sos.ts||0;
+        if(!ts)return;
+        const key=String(ts)+"_"+(sos.patPhone||"x");
+        if(seenTs.has(key))return;
+        if(Date.now()-ts>120000)return;
+        seenTs.add(key);
+        cb({...sos,ts});
+      };
+      // REST polling — works without ESM (poll every 2 seconds)
+      let lastTs=0;
+      const DB_URL="https://curelink-703e5-default-rtdb.firebaseio.com";
+      const restPoll=setInterval(()=>{
+        fetch(`${DB_URL}/${ROOT}/sos_broadcast.json`)
+          .then(r=>r.json())
+          .then(v=>{if(v&&v._ts&&v._ts!==lastTs){lastTs=v._ts;handleSos(v);}})
+          .catch(()=>{});
+      },2000);
+      // ESM realtime listener (faster, when available)
+      let unsub1=()=>{},unsub2=()=>{};
+      const connectESM=()=>{
+        if(!ok())return;
+        try{
+          unsub1=window._fb.onValue(fbRef(`${ROOT}/sos_broadcast`),s=>{
+            const v=s.val();if(v)handleSos(v);
+          });
+          unsub2=window._fb.onValue(fbRef(`${ROOT}/meta`),s=>{
+            const v=s.val();if(!v)return;
+            Object.entries(v).filter(([k])=>k.startsWith("sos_")).forEach(([,d])=>handleSos(d));
+          });
+        }catch(e){}
+      };
+      let esm=0;
+      const esmPoll=setInterval(()=>{if(ok()||esm++>30){clearInterval(esmPoll);connectESM();}},200);
+      return()=>{
+        clearInterval(restPoll);clearInterval(esmPoll);
+        try{unsub1();}catch(e){}try{unsub2();}catch(e){}
+      };
+    },
+    clearSOS(patEmailKey){
+      this._fbREST(`${ROOT}/sos_broadcast`,"PUT",null);
+      this._fbREST(`${ROOT}/meta/sos_${patEmailKey}`,"DELETE");
+      if(ok()){
+        try{window._fb.remove(fbRef(`${ROOT}/sos_broadcast`));}catch(e){}
+        try{window._fb.remove(fbRef(`${ROOT}/meta/sos_${patEmailKey}`));}catch(e){}
+      }
+    },
+  };
+})();
+(()=>{
+  const saved=LS.get("cl_docs")||[];
+  const merged=DUMMY_DOCS.map(dd=>{const existing=saved.find(s=>s.id===dd.id);return existing?existing:dd;});
+  const realDrs=saved.filter(s=>!DUMMY_DOCS.find(dd=>dd.id===s.id));
+  LS.set("cl_docs",[...merged,...realDrs]);
+})();
+/* Remove any doctor named Reshma from saved data */
+(()=>{
+  const saved=LS.get("cl_docs")||[];
+  const cleaned=saved.filter(d=>!d.name.toLowerCase().includes("reshma"));
+  if(cleaned.length!==saved.length) LS.set("cl_docs",cleaned);
+})();
+const sortTimes=arr=>[...arr].sort((a,b)=>{const f=x=>{const[h,m]=x.split(":").map(Number);return(x.includes("PM")&&h!==12?h+12:x.includes("AM")&&h===12?0:h)*60+m;};return f(a)-f(b);});
+const Av=({name,sz=40,g=["#7c3aed","#4f46e5"]})=>{const ini=(name||"?").split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase();return <div style={{width:sz,height:sz,borderRadius:"50%",background:`linear-gradient(135deg,${g[0]},${g[1]})`,display:"flex",alignItems:"center",justifyContent:"center",color:"#1e1535",fontWeight:800,fontSize:sz*.36,flexShrink:0,fontFamily:"inherit",boxShadow:`0 3px 10px ${g[0]}44`}}>{ini}</div>;};
+const Spin=()=><span style={{display:"inline-block",width:15,height:15,border:"2px solid rgba(255,255,255,.25)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin .65s linear infinite",verticalAlign:"middle"}}/>;
+
+function Toast({msg,type,onClose}){
+  useEffect(()=>{const t=setTimeout(onClose,3800);return()=>clearTimeout(t);},[]);
+  const bg=type==="ok"?"linear-gradient(135deg,#059669,#0891b2)":type==="new"?"linear-gradient(135deg,#7c3aed,#4f46e5)":"linear-gradient(135deg,#d97706,#92400e)";
+  return <div style={{position:"fixed",top:18,left:"50%",transform:"translateX(-50%)",zIndex:9999,background:bg,color:"#1e1535",padding:"12px 17px",borderRadius:12,fontWeight:600,fontSize:13.5,boxShadow:"0 8px 26px rgba(0,0,0,.42)",animation:"fadeUp .4s cubic-bezier(.22,1,.36,1)",display:"flex",alignItems:"center",gap:9,maxWidth:"90vw",width:"max-content"}}><span style={{fontSize:17}}>{type==="ok"?"👋":type==="new"?"🎉":"🔔"}</span>{msg}</div>;
+}
+
+
+/* ══════════════════════════════════════════
+   📹 IN-APP VIDEO CALL FRAME (Daily.co)
+   Full-screen overlay with Daily.co iframe
+   ══════════════════════════════════════════ */
+function VideoCallFrame({roomUrl, callerName, onEnd}){
+  const[status,setStatus]=useState("connecting"); // connecting | live | ended
+  const[timer,setTimer]=useState(0);
+  const timerRef=useRef(null);
+
+  useEffect(()=>{
+    // Start timer once iframe loads
+    const t=setTimeout(()=>{
+      setStatus("live");
+      timerRef.current=setInterval(()=>setTimer(s=>s+1),1000);
+    },3000);
+    return()=>{clearTimeout(t);clearInterval(timerRef.current);};
+  },[]);
+
+  const fmt=s=>{const m=Math.floor(s/60);const sec=s%60;return`${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;};
+
+  const endCall=()=>{
+    setStatus("ended");
+    clearInterval(timerRef.current);
+    setTimeout(onEnd,800);
+  };
+
+  return(
+    <div style={{position:"fixed",inset:0,background:"#0a0a1a",zIndex:9000,display:"flex",flexDirection:"column",animation:"fadeIn .25s ease"}}>
+      {/* Top bar */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px",background:"rgba(0,0,0,.6)",backdropFilter:"blur(12px)",flexShrink:0,zIndex:1}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#10b981,#0891b2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>📹</div>
+          <div>
+            <div style={{color:"#fff",fontWeight:700,fontSize:13,fontFamily:"'Plus Jakarta Sans',sans-serif"}}>Video Consultation</div>
+            <div style={{color:"#6ee7b7",fontSize:10,marginTop:1}}>{callerName}</div>
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          {status==="live"&&(
+            <div style={{display:"flex",alignItems:"center",gap:6,background:"rgba(16,185,129,.15)",border:"1px solid rgba(16,185,129,.4)",borderRadius:20,padding:"4px 10px"}}>
+              <div style={{width:6,height:6,borderRadius:"50%",background:"#10b981",animation:"pulse 1.5s infinite"}}/>
+              <span style={{color:"#6ee7b7",fontSize:10,fontWeight:700,fontFamily:"'Plus Jakarta Sans',sans-serif"}}>{fmt(timer)}</span>
+            </div>
+          )}
+          {status==="connecting"&&(
+            <div style={{display:"flex",alignItems:"center",gap:6,background:"rgba(245,158,11,.15)",border:"1px solid rgba(245,158,11,.4)",borderRadius:20,padding:"4px 10px"}}>
+              <div style={{width:6,height:6,borderRadius:"50%",background:"#f59e0b",animation:"pulse 1s infinite"}}/>
+              <span style={{color:"#fde68a",fontSize:10,fontWeight:700,fontFamily:"'Plus Jakarta Sans',sans-serif"}}>Connecting...</span>
+            </div>
+          )}
+          <button onClick={endCall} style={{background:"linear-gradient(135deg,#e11d48,#be123c)",color:"#fff",border:"none",borderRadius:10,padding:"8px 16px",fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:800,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",gap:6,boxShadow:"0 4px 14px rgba(225,29,72,.5)"}}>
+            📵 End Call
+          </button>
+        </div>
+      </div>
+
+      {/* Daily.co iframe */}
+      <div style={{flex:1,position:"relative"}}>
+        {status==="connecting"&&(
+          <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14,zIndex:2,pointerEvents:"none"}}>
+            <div style={{width:64,height:64,border:"3px solid rgba(16,185,129,.3)",borderTopColor:"#10b981",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>
+            <div style={{color:"#6b7280",fontSize:13,fontFamily:"'Plus Jakarta Sans',sans-serif"}}>Setting up secure room...</div>
+          </div>
+        )}
+        <iframe
+          src={roomUrl}
+          allow="camera; microphone; fullscreen; display-capture; autoplay"
+          style={{width:"100%",height:"100%",border:"none",display:"block",background:"#0a0a1a"}}
+          title="CureLink Video Consultation"
+        />
+      </div>
+
+      {status==="ended"&&(
+        <div style={{position:"absolute",inset:0,background:"rgba(10,10,26,.9)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14,zIndex:10}}>
+          <div style={{fontSize:48}}>👋</div>
+          <div style={{color:"#fff",fontWeight:700,fontSize:16,fontFamily:"'Playfair Display',serif"}}>Call Ended</div>
+          <div style={{color:"#9ca3af",fontSize:12}}>Duration: {fmt(timer)}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   📹 INCOMING CALL POPUP
+   ══════════════════════════════════════════ */
+function IncomingCallPopup({callerName, roomName, dailyUrl, callKey, onAccept, onDecline}){
+  const[elapsed,setElapsed]=useState(0);
+  const audioRef=useRef(null);
+
+  useEffect(()=>{
+    // Beep sound every 2 seconds
+    const ac=new (window.AudioContext||window.webkitAudioContext)();
+    const beep=()=>{
+      try{
+        const o=ac.createOscillator();const g=ac.createGain();
+        o.connect(g);g.connect(ac.destination);
+        o.frequency.value=880;g.gain.value=0.3;
+        o.start();o.stop(ac.currentTime+0.15);
+        setTimeout(()=>{
+          const o2=ac.createOscillator();const g2=ac.createGain();
+          o2.connect(g2);g2.connect(ac.destination);
+          o2.frequency.value=1100;g2.gain.value=0.3;
+          o2.start();o2.stop(ac.currentTime+0.2);
+        },200);
+      }catch(e){}
+    };
+    beep();
+    const iv=setInterval(beep,2500);
+    audioRef.current={ac,iv};
+    return()=>{clearInterval(iv);try{ac.close();}catch(e){}};
+  },[]);
+
+  useEffect(()=>{
+    const iv=setInterval(()=>setElapsed(s=>{
+      if(s>=60){onDecline();return s;}
+      return s+1;
+    }),1000);
+    return()=>clearInterval(iv);
+  },[]);
+
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.65)",backdropFilter:"blur(8px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",animation:"fadeIn .3s ease",padding:16}}>
+      <div style={{background:"#fff",borderRadius:28,padding:"36px 28px",maxWidth:380,width:"100%",textAlign:"center",animation:"fadeUp .4s cubic-bezier(.22,1,.36,1)",boxShadow:"0 30px 80px rgba(0,0,0,.35)"}}>
+        <div style={{width:80,height:80,borderRadius:"50%",background:"linear-gradient(135deg,#10b981,#0891b2)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 18px",fontSize:38,animation:"pulse 1.5s infinite",boxShadow:"0 0 40px rgba(16,185,129,.45)"}}>📹</div>
+        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:"#1e1535",marginBottom:6}}>Incoming Video Call</h3>
+        <p style={{color:"#6b7280",fontSize:14,marginBottom:6}}>from</p>
+        <p style={{fontWeight:800,fontSize:18,color:"#059669",marginBottom:16}}>{callerName}</p>
+        <div style={{background:"#f0fdf4",border:"1px solid #a7f3d0",borderRadius:10,padding:"8px 12px",marginBottom:20,fontSize:11.5,color:"#065f46"}}>
+          🔒 Secure Daily.co Room
+          <div style={{fontSize:10,color:"#9ca3af",marginTop:3}}>Auto-dismiss in {60-elapsed}s</div>
+        </div>
+        <div style={{display:"flex",gap:12}}>
+          <button onClick={onDecline} style={{flex:1,background:"linear-gradient(135deg,#ef4444,#dc2626)",color:"#fff",border:"none",borderRadius:16,padding:"14px",fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:800,fontSize:15,cursor:"pointer",boxShadow:"0 4px 18px rgba(239,68,68,.4)",transition:"all .2s"}}>
+            ❌ Decline
+          </button>
+          <button onClick={onAccept} style={{flex:1.5,background:"linear-gradient(135deg,#10b981,#059669)",color:"#fff",border:"none",borderRadius:16,padding:"14px",fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:800,fontSize:15,cursor:"pointer",boxShadow:"0 6px 24px rgba(16,185,129,.5)",transition:"all .2s",animation:"glow 2s infinite"}}>
+            ✅ Accept Call
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* LANDING */
+function Landing({onChoice}){
+  return(
+    <div style={{minHeight:"100vh",background:"#f6f4ff",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 16px",position:"relative",overflow:"hidden"}}>
+      <div className="orb" style={{width:400,height:400,background:"#7c3aed",top:-150,left:-150}}/>
+      <div className="orb" style={{width:300,height:300,background:"#0891b2",bottom:-80,right:-80}}/>
+      <div className="orb" style={{width:250,height:250,background:"#059669",bottom:40,left:"35%"}}/>
+      <div className="fu" style={{textAlign:"center",marginBottom:36}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,justifyContent:"center",marginBottom:12}}>
+          <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#7c3aed,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,boxShadow:"0 8px 30px rgba(124,58,237,.55)"}}>+</div>
+          <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(32px,8vw,52px)",fontWeight:900,background:"linear-gradient(135deg,#7c3aed,#06b6d4,#059669)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>CureLink</h1>
+        </div>
+        <p style={{color:"#9ca3af",fontSize:14}}>Smart Healthcare. Seamless Connections.</p>
+      </div>
+      <div className="landing-cards" style={{display:"flex",gap:16,flexWrap:"wrap",justifyContent:"center",width:"100%",maxWidth:820}}>
+        {[["user","🧑‍⚕️","I'm a Patient","Book appointments, AI symptom checker, waiting list","#faf5ff","#ede9fe","rgba(124,58,237,.6)","tag-v","btn-v","Continue as Patient →",["📅 Book Doctor Appointments","🤖 AI Symptom Checker","⏳ Smart Waiting List","📋 Appointment History"]],
+           ["doctor","👨‍⚕️","I'm a Doctor","Manage appointments, set slots, view waiting lists","#f0fdf4","#a7f3d0","rgba(5,150,105,.6)","tag-g","btn-g","Continue as Doctor →",["🗓️ Set Your Own Time Slots","🔘 Toggle Availability","⏳ View Waiting Lists","📊 Manage Appointments"]]
+        ].map(([k,em,title,desc,bg,border,hborder,tag,btn,cta,features])=>(
+          <div key={k} className="fu landing-card" onClick={()=>onChoice(k)} style={{animationDelay:k==="user"?".07s":".15s",flex:"1 1 300px",maxWidth:360,background:bg,border:`2px solid ${border}`,borderRadius:22,padding:"28px 24px",cursor:"pointer",transition:"all .28s",touchAction:"manipulation"}}>
+            <div style={{fontSize:50,marginBottom:14}} className="float">{em}</div>
+            <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:"#1e1535",marginBottom:7}}>{title}</h2>
+            <p style={{color:"#9ca3af",fontSize:13,lineHeight:1.7,marginBottom:14}}>{desc}</p>
+            {features.map(f=><div key={f} style={{color:"#9ca3af",fontSize:12,marginBottom:5}}>{f}</div>)}
+            <div className={btn} style={{display:"block",textAlign:"center",padding:"11px",marginTop:16,fontSize:13.5}}>{cta}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* PATIENT LOGIN */
+function PatientLogin({onBack,onLogin}){
+  const[f,setF]=useState({name:"",email:"",phone:"",address:""});const[err,setErr]=useState("");
+  const go=()=>{
+    setErr("");
+    if(!f.name.trim()||!f.email.trim()||!f.phone.trim())return setErr("All fields are required.");
+    if(!/\S+@\S+\.\S+/.test(f.email))return setErr("Enter a valid email.");
+    if(!/^\d{10}$/.test(f.phone))return setErr("Enter a valid 10-digit phone number.");
+    onLogin(f);
+  };
+  return(
+    <div className="login-split" style={{minHeight:"100vh",background:"#f6f4ff",display:"flex",position:"relative",overflow:"hidden"}}>
+      <div className="orb" style={{width:500,height:500,background:"#7c3aed",top:-180,left:-180}}/>
+      <div className="orb" style={{width:320,height:320,background:"#4f46e5",bottom:-80,right:-60}}/>
+      <div className="login-left" style={{width:"44%",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",padding:44,position:"relative",zIndex:1}}>
+        <div className="fu" style={{textAlign:"center"}}>
+          <div style={{fontSize:64,marginBottom:16}} className="float">🧑‍⚕️</div>
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:30,color:"#1e1535",marginBottom:10}}>Patient Portal</h2>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginTop:22}}>
+            {[["🤖","AI Checker"],["📅","Easy Booking"],["⏳","Waiting List"],["🔒","Account Saved"]].map(([ic,lb])=>(
+              <div key={lb} style={{background:"#fafafa",border:"1px solid #e2e8f0",borderRadius:10,padding:"11px",textAlign:"center"}}>
+                <div style={{fontSize:20,marginBottom:4}}>{ic}</div><div style={{color:"#9ca3af",fontSize:11,fontWeight:700}}>{lb}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="login-right" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:24,position:"relative",zIndex:1}}>
+        <div className="fu" style={{width:"100%",maxWidth:400,animationDelay:".06s"}}>
+          <button className="btn-ghost" onClick={onBack} style={{marginBottom:20,fontSize:12,padding:"9px 15px"}}>← Back</button>
+          <span className="tag tag-v" style={{marginBottom:11,display:"inline-block"}}>PATIENT LOGIN</span>
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:26,color:"#1e1535",marginBottom:5}}>Sign In</h2>
+          <p style={{color:"#9ca3af",fontSize:12,marginBottom:20}}>Same email + phone = previous account restored</p>
+          <div style={{display:"flex",flexDirection:"column",gap:13}}>
+            {[["FULL NAME","name","text","Your full name"],["EMAIL","email","email","your@email.com"],["PHONE","phone","tel","10-digit number"]].map(([lb,k,t,ph])=>(
+              <div key={k}><label className="lbl">{lb}</label>
+                <input className="inp" type={t} placeholder={ph} value={f[k]} onChange={e=>setF({...f,[k]:k==="phone"?e.target.value.replace(/\D/g,"").slice(0,10):e.target.value})} onKeyDown={e=>e.key==="Enter"&&go()}/>
+              </div>
+            ))}
+            <div><label className="lbl">HOME ADDRESS (For SOS Emergency)</label>
+              <input className="inp" type="text" placeholder="e.g. House No. 12, Gandhi Nagar, Phagwara" value={f.address} onChange={e=>setF({...f,address:e.target.value})} onKeyDown={e=>e.key==="Enter"&&go()}/>
+            </div>
+            {err&&<div style={{background:"#fff1f2",border:"1px solid #fecaca",borderRadius:9,padding:"9px 13px",color:"rgba(220,38,38,.35)",fontSize:13}}>⚠ {err}</div>}
+            <button className="btn-v" onClick={go} style={{width:"100%",padding:"13px",fontSize:14,marginTop:4}}>Enter Patient Portal →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* DOCTOR LOGIN — with email field + email+phone match */
+function DoctorLogin({onBack,onLogin}){
+  const[f,setF]=useState({drName:"",email:"",phone:"",spec:"",regId:"",hospital:"",hospitalAddress:""});const[err,setErr]=useState("");
+  const go=()=>{
+    setErr("");
+    if(!f.drName.trim()||!f.email.trim()||!f.phone.trim()||!f.spec||!f.regId.trim())return setErr("All fields are required.");
+    if(!f.hospital.trim())return setErr("Clinic / Hospital name is required.");
+    if(!f.hospitalAddress.trim())return setErr("Hospital address is required.");
+    if(!/\S+@\S+\.\S+/.test(f.email))return setErr("Enter a valid email.");
+    if(!/^\d{10}$/.test(f.phone))return setErr("Enter a valid 10-digit phone number.");
+    if(!f.regId.toUpperCase().startsWith("NMC"))return setErr("NMC Registration ID must start with 'NMC'.");
+    /* Check if same NMC ID already registered — email+phone must match */
+    const savedDocs=LS.get("cl_docs",[]);
+    const existing=savedDocs.find(d=>d.id===f.regId.toUpperCase().trim());
+    if(existing&&existing.email&&existing.phone){
+      if(existing.email.toLowerCase()!==f.email.toLowerCase()||existing.phone!==f.phone){
+        return setErr("This NMC ID is already registered with different email/phone. Use the same credentials.");
+      }
+    }
+    onLogin({name:f.drName.trim(),email:f.email.trim().toLowerCase(),phone:f.phone.trim(),spec:f.spec,regId:f.regId.toUpperCase().trim(),hospital:f.hospital.trim(),hospitalAddress:f.hospitalAddress.trim()});
+  };
+  return(
+    <div className="login-split" style={{minHeight:"100vh",background:"#f0fdf9",display:"flex",position:"relative",overflow:"hidden"}}>
+      <div className="orb" style={{width:500,height:500,background:"#059669",top:-180,left:-180}}/>
+      <div className="orb" style={{width:320,height:320,background:"#0891b2",bottom:-80,right:-60}}/>
+      <div className="login-left" style={{width:"44%",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",padding:44,position:"relative",zIndex:1}}>
+        <div className="fu" style={{textAlign:"center"}}>
+          <div style={{fontSize:64,marginBottom:16}} className="float">👨‍⚕️</div>
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:30,color:"#1e1535",marginBottom:10}}>Doctor Portal</h2>
+          {["✅ NMC Registered Doctors Only","🔐 Email + Phone Identity Match","🗓️ Control Your Own Slots","⏳ View Waiting Lists","🔘 Toggle Availability"].map(x=>(
+            <div key={x} style={{background:"#fafafa",border:"1px solid #6ee7b7",borderRadius:9,padding:"9px 13px",color:"#6b7280",fontSize:12,textAlign:"left",marginBottom:7}}>{x}</div>
+          ))}
+        </div>
+      </div>
+      <div className="login-right" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:24,position:"relative",zIndex:1}}>
+        <div className="fu" style={{width:"100%",maxWidth:420,animationDelay:".06s"}}>
+          <button className="btn-ghost" onClick={onBack} style={{marginBottom:20,fontSize:12,padding:"9px 15px"}}>← Back</button>
+          <span className="tag tag-g" style={{marginBottom:11,display:"inline-block"}}>DOCTOR LOGIN</span>
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:26,color:"#1e1535",marginBottom:5}}>Access Your Practice</h2>
+          <p style={{color:"#9ca3af",fontSize:12,marginBottom:20}}>Same NMC ID + Email + Phone = profile restored automatically</p>
+          <div style={{display:"flex",flexDirection:"column",gap:13}}>
+            <div><label className="lbl">FULL DOCTOR NAME</label><input className="inp" placeholder="Dr. Full Name" value={f.drName} onChange={e=>setF({...f,drName:e.target.value})}/></div>
+            <div><label className="lbl">EMAIL ADDRESS</label><input className="inp" type="email" placeholder="doctor@email.com" value={f.email} onChange={e=>setF({...f,email:e.target.value})}/></div>
+            <div><label className="lbl">PHONE NUMBER</label><input className="inp" type="tel" placeholder="10-digit number" value={f.phone} onChange={e=>setF({...f,phone:e.target.value.replace(/\D/g,"").slice(0,10)})}/></div>
+            <div><label className="lbl">SPECIALITY</label>
+              <select className="inp" value={f.spec} onChange={e=>setF({...f,spec:e.target.value})} style={{cursor:"pointer"}}>
+                <option value="">Select speciality</option>{SPECS.map(s=><option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div><label className="lbl">NMC REGISTRATION ID</label><input className="inp" placeholder="e.g. NMC12345" value={f.regId} onChange={e=>setF({...f,regId:e.target.value})}/></div>
+            <div style={{background:"#f0fdf4",border:"1px solid #a7f3d0",borderRadius:11,padding:"13px 15px",display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{fontSize:11,fontWeight:800,color:"#059669",letterSpacing:"1px"}}>🏥 CLINIC / HOSPITAL DETAILS</div>
+              <div><label className="lbl">HOSPITAL / CLINIC NAME</label><input className="inp" placeholder="e.g. City Care Hospital" value={f.hospital} onChange={e=>setF({...f,hospital:e.target.value})}/></div>
+              <div><label className="lbl">HOSPITAL ADDRESS</label><input className="inp" placeholder="e.g. Near Bus Stand, GT Road, Phagwara" value={f.hospitalAddress} onChange={e=>setF({...f,hospitalAddress:e.target.value})} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
+              <div style={{background:"#dcfce7",borderRadius:8,padding:"7px 10px",fontSize:11,color:"#166534",display:"flex",alignItems:"center",gap:5}}>
+                📍 <span>App is <strong>only for Phagwara, Punjab</strong> — no other city/state allowed</span>
+              </div>
+            </div>
+            {err&&<div style={{background:"#fff1f2",border:"1px solid #fecaca",borderRadius:9,padding:"9px 13px",color:"rgba(220,38,38,.35)",fontSize:13}}>⚠ {err}</div>}
+            <button className="btn-g" onClick={go} style={{width:"100%",padding:"13px",fontSize:14,marginTop:4}}>Enter Doctor Portal →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* DOCTOR SETUP */
+function DoctorSetup({loginInfo,onComplete}){
+  const[step,setStep]=useState(1);const[p,setP]=useState({age:"",city:"Phagwara",state:"Punjab",fees:"",quote:""});
+  const[sel,setSel]=useState([]);const[err,setErr]=useState("");
+  const tog=t=>setSel(s=>s.includes(t)?s.filter(x=>x!==t):sortTimes([...s,t]));
+  const next=()=>{setErr("");if(!p.age||!p.city||!p.state||!p.fees)return setErr("Fill all required fields.");if(isNaN(p.fees)||+p.fees<100)return setErr("Minimum fee is ₹100.");setStep(2);};
+  const finish=()=>{if(!sel.length)return setErr("Select at least one slot.");onComplete({...loginInfo,...p,fees:+p.fees,slots:sel,bk:[],apts:[],waitlist:{},on:false});};
+  return(
+    <div style={{minHeight:"100vh",background:"#f0fdf9",display:"flex",alignItems:"center",justifyContent:"center",padding:16,position:"relative",overflow:"hidden"}}>
+      <div className="orb" style={{width:400,height:400,background:"#059669",top:-150,right:-100}}/>
+      <div className="orb" style={{width:300,height:300,background:"#7c3aed",bottom:-100,left:-80}}/>
+      <div className="fu" style={{width:"100%",maxWidth:600,position:"relative",zIndex:1}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
+          {[1,2].map(n=>(
+            <React.Fragment key={n}>
+              <div style={{width:28,height:28,borderRadius:"50%",background:step>=n?"linear-gradient(135deg,#059669,#0891b2)":"#ede9fe",display:"flex",alignItems:"center",justifyContent:"center",color:step>=n?"#fff":"#9ca3af",fontWeight:700,fontSize:12,flexShrink:0}}>{step>n?"✓":n}</div>
+              <span style={{fontSize:12,color:step>=n?"#1e1535":"#9ca3af",fontWeight:600}}>{n===1?"Profile Setup":"Set Time Slots"}</span>
+              {n<2&&<div style={{flex:1,height:2,background:step>1?"linear-gradient(90deg,#059669,#0891b2)":"#ede9fe",borderRadius:2}}/>}
+            </React.Fragment>
+          ))}
+        </div>
+        <div style={{background:"#fff",border:"1px solid #a7f3d0",borderRadius:18,padding:22}}>
+          <div style={{display:"flex",gap:12,alignItems:"center",marginBottom:18,padding:12,background:"#f0fdf4",borderRadius:11,border:"1px solid #a7f3d0"}}>
+            <Av name={loginInfo.name} sz={44} g={["#059669","#0891b2"]}/><div><div style={{fontWeight:700,color:"#1e1535",fontSize:14}}>{loginInfo.name}</div><span className="tag tag-g">{loginInfo.spec}</span><div style={{fontSize:11,color:"#9ca3af",marginTop:2}}>Reg: {loginInfo.regId}</div></div>
+          </div>
+          {step===1&&<>
+            <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:"#1e1535",marginBottom:16}}>Complete Your Profile</h3>
+            <div className="form-grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+              {[["AGE *","age","number","e.g. 45"],["FEES (₹) *","fees","number","e.g. 500"]].map(([lb,k,t,ph])=>(
+                <div key={k}><label className="lbl">{lb}</label><input className="inp" type={t} placeholder={ph} value={p[k]} onChange={e=>setP({...p,[k]:e.target.value})}/></div>
+              ))}
+              <div><label className="lbl">CITY 📍</label><div className="inp" style={{background:"#f0fdf4",border:"1.5px solid #a7f3d0",color:"#166534",fontWeight:700,cursor:"default",display:"flex",alignItems:"center",gap:6}}><span>🔒</span> Phagwara</div></div>
+              <div><label className="lbl">STATE 📍</label><div className="inp" style={{background:"#f0fdf4",border:"1.5px solid #a7f3d0",color:"#166534",fontWeight:700,cursor:"default",display:"flex",alignItems:"center",gap:6}}><span>🔒</span> Punjab</div></div>
+              <div style={{gridColumn:"1/-1",background:"#dcfce7",borderRadius:9,padding:"8px 12px",fontSize:11.5,color:"#166534",display:"flex",gap:6,alignItems:"center"}}>📍 CureLink currently serves <strong>Phagwara, Punjab only</strong></div>
+              <div style={{gridColumn:"1/-1"}}><label className="lbl">QUOTE (Optional)</label><input className="inp" placeholder="Share a thought with your patients..." value={p.quote} onChange={e=>setP({...p,quote:e.target.value})}/></div>
+            </div>
+            {err&&<div style={{background:"#fff1f2",border:"1px solid #fecaca",borderRadius:9,padding:"9px 13px",color:"rgba(220,38,38,.35)",fontSize:12.5,marginTop:12}}>⚠ {err}</div>}
+            <button className="btn-g" onClick={next} style={{width:"100%",padding:13,marginTop:16,fontSize:13.5}}>Next: Set Slots →</button>
+          </>}
+          {step===2&&<>
+            <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:"#1e1535",marginBottom:16}}>Choose Your Time Slots</h3>
+            {[["🌅 MORNING",ALL_TIMES.filter(t=>t.includes("AM"))],["🌤️ AFTERNOON & EVENING",ALL_TIMES.filter(t=>t.includes("PM"))]].map(([hd,slots])=>(
+              <div key={hd} style={{marginBottom:13}}>
+                <div className="lbl" style={{marginBottom:8}}>{hd}</div>
+                <div className="slot-grid" style={{display:"flex",flexWrap:"wrap",gap:6}}>{slots.map(t=><button key={t} className={"time-btn"+(sel.includes(t)?" picked":"")} onClick={()=>tog(t)}>{t}</button>)}</div>
+              </div>
+            ))}
+            {sel.length>0&&<div style={{background:"#f0fdf4",border:"1px solid rgba(5,150,105,.16)",borderRadius:10,padding:11,marginBottom:12}}>
+              <div className="lbl" style={{color:"#6ee7b7",marginBottom:5}}>SELECTED: {sel.length} slots</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:4}}>{sel.map(s=><span key={s} className="tag tag-g" style={{fontSize:10}}>{s}</span>)}</div>
+            </div>}
+            {err&&<div style={{background:"#fff1f2",border:"1px solid #fecaca",borderRadius:9,padding:"9px 13px",color:"rgba(220,38,38,.35)",fontSize:12.5,marginBottom:12}}>⚠ {err}</div>}
+            <div style={{display:"flex",gap:9}}>
+              <button className="btn-ghost" onClick={()=>{setStep(1);setErr("");}}>← Back</button>
+              <button className="btn-g" onClick={finish} style={{flex:1,padding:13,fontSize:13.5}}>Complete Setup →</button>
+            </div>
+          </>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* AI CHECKER — Groq API powered (FREE) */
+function AiCheck(){
+  const SYSTEM_PROMPT="You are CureAI, a compassionate medical AI for CureLink India (serving Phagwara, Punjab). Assess symptoms thoroughly, explain medicines with dosage and side effects, and provide health guidance in simple English mixed with Hindi terms users may relate to. For HIGH RISK symptoms (chest pain, stroke, severe breathing, heavy bleeding, loss of consciousness), always end with: '🚨 EMERGENCY: Call 112 or go to the nearest emergency room immediately.' Use bullet points for clarity. Be empathetic, warm, and precise. Keep responses concise but complete.";
+  const[msgs,setMsgs]=useState([{r:"ai",t:"Namaste! Main hoon CureAI 🤖\n\nApne symptoms describe karein ya koi bhi medicine ke baare mein poochein. Main aapki condition assess karne mein madad karunga.\n\n⚠️ Main ek AI assistant hoon — serious conditions ke liye hamesha ek qualified doctor se consult karein."}]);
+  const[inp,setInp]=useState("");const[load,setLoad]=useState(false);
+  const[apiKey,setApiKey]=useState(()=>localStorage.getItem("cl_groq_key")||"");
+  const[keyInp,setKeyInp]=useState("");const[showKeySetup,setShowKeySetup]=useState(false);
+  const bot=useRef(null);
+  useEffect(()=>{bot.current?.scrollIntoView({behavior:"smooth"});},[msgs,load]);
+  useEffect(()=>{if(!apiKey)setShowKeySetup(true);},[apiKey]);
+
+  const saveKey=()=>{
+    const k=keyInp.trim();
+    if(!k.startsWith("gsk_")){alert("Invalid key — Groq key gsk_ se shuru hoti hai");return;}
+    localStorage.setItem("cl_groq_key",k);setApiKey(k);setShowKeySetup(false);setKeyInp("");
+  };
+  const clearKey=()=>{localStorage.removeItem("cl_groq_key");setApiKey("");setKeyInp("");setShowKeySetup(true);};
+
+  const send=async()=>{
+    if(!inp.trim()||load)return;
+    if(!apiKey){setShowKeySetup(true);return;}
+    const um=inp.trim();setInp("");setLoad(true);
+    setMsgs(m=>[...m,{r:"user",t:um}]);
+    try{
+      const history=msgs.slice(1).map(m=>({role:m.r==="ai"?"assistant":"user",content:m.t}));
+      const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+apiKey},
+        body:JSON.stringify({
+          model:"llama-3.3-70b-versatile",
+          max_tokens:1024,
+          messages:[{role:"system",content:SYSTEM_PROMPT},...history,{role:"user",content:um}]
+        })
+      });
+      if(!res.ok){
+        const e=await res.json().catch(()=>({}));
+        if(res.status===401||res.status===403){setMsgs(m=>[...m,{r:"ai",t:"⚠️ Invalid API key. Tap 🔑 upar se key update karein."}]);setLoad(false);return;}
+        if(res.status===429){setMsgs(m=>[...m,{r:"ai",t:"⏳ Rate limit. Thodi der baad try karein."}]);setLoad(false);return;}
+        setMsgs(m=>[...m,{r:"ai",t:"⚠️ Error "+res.status+": "+(e?.error?.message||"Unknown")}]);
+      }else{
+        const d=await res.json();
+        const txt=d?.choices?.[0]?.message?.content||"Sorry, no response. Please try again.";
+        setMsgs(m=>[...m,{r:"ai",t:txt}]);
+      }
+    }catch(e){setMsgs(m=>[...m,{r:"ai",t:"⚠️ Network error: "+e.message}]);}
+    setLoad(false);
+  };
+
+  if(showKeySetup) return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"calc(100vh - 140px)",minHeight:460,padding:20}}>
+      <div style={{width:"100%",maxWidth:440,background:"#fff",border:"1.5px solid #ede9fe",borderRadius:20,padding:26,boxShadow:"0 8px 32px rgba(124,58,237,.12)"}}>
+        <div style={{fontSize:36,textAlign:"center",marginBottom:6}}>⚡</div>
+        <div style={{textAlign:"center",marginBottom:4}}><span style={{background:"linear-gradient(135deg,#f97316,#ef4444)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontWeight:900,fontSize:13,letterSpacing:1}}>GROQ AI</span></div>
+        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:"#1e1535",textAlign:"center",marginBottom:6}}>Groq API Key Daalo</h3>
+        <p style={{color:"#6b7280",fontSize:12.5,textAlign:"center",marginBottom:16,lineHeight:1.6}}>Groq <strong>FREE tier</strong> hai — blazing fast! Key sirf browser mein save hoti hai.</p>
+        <div style={{background:"#fff7ed",border:"1px solid #fed7aa",borderRadius:11,padding:"11px 13px",marginBottom:16,fontSize:12,color:"#9a3412",lineHeight:1.8}}>
+          <strong>🔑 Key kaise milegi (2 minute):</strong><br/>
+          1. <a href="https://console.groq.com/keys" target="_blank" style={{color:"#ea580c",fontWeight:700}}>console.groq.com/keys</a> kholo<br/>
+          2. Google se sign up karo (free)<br/>
+          3. <strong>"Create API Key"</strong> pe click karo<br/>
+          4. Key copy karo (<code style={{background:"#ffedd5",padding:"1px 5px",borderRadius:4}}>gsk_...</code> se shuru hogi)<br/>
+          5. Neeche paste karo ✅
+        </div>
+        <div style={{background:"#fef9c3",border:"1px solid #fde68a",borderRadius:9,padding:"8px 12px",marginBottom:14,fontSize:11.5,color:"#92400e"}}>
+          💡 <strong>Free tier:</strong> ~14,400 requests/day — koi credit card nahi!
+        </div>
+        <label className="lbl">GROQ API KEY</label>
+        <input className="inp" type="password" placeholder="gsk_..." value={keyInp} onChange={e=>setKeyInp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveKey()} style={{marginBottom:12}}/>
+        <button className="btn-v" onClick={saveKey} style={{width:"100%",padding:13,fontSize:14,marginBottom:8,background:"linear-gradient(135deg,#f97316,#ef4444)"}}>Save Key & CureAI Shuru Karo →</button>
+        {apiKey&&<button className="btn-ghost" onClick={()=>setShowKeySetup(false)} style={{width:"100%",padding:11,fontSize:13}}>← Wapas Chat pe Jao</button>}
+      </div>
+    </div>
+  );
+
+  const suggestions=["Mujhe bukhar aur sar dard hai","Saans lene mein takleef ho rahi hai","Sardi khansi ki dawai","Diabetics ke liye diet suggest karein"];
+  return(
+    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 140px)",minHeight:460}}>
+      <div style={{background:"linear-gradient(135deg,#ea580c,#dc2626)",borderRadius:"14px 14px 0 0",padding:"12px 16px",display:"flex",alignItems:"center",gap:11,flexShrink:0}}>
+        <div style={{fontSize:24,animation:"float 3s ease-in-out infinite"}}>⚡</div>
+        <div style={{flex:1}}>
+          <div style={{color:"#fff",fontWeight:800,fontSize:14,fontFamily:"'Playfair Display',serif"}}>CureAI — Symptom Checker</div>
+          <div style={{color:"#fed7aa",fontSize:11}}>Powered by Groq · Llama 3.3 (Free)</div>
+        </div>
+        <button onClick={clearKey} title="Update API Key" style={{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.25)",borderRadius:8,padding:"5px 9px",cursor:"pointer",fontSize:13,color:"#fff"}}>🔑</button>
+        <div style={{display:"flex",alignItems:"center",gap:5}}>
+          <div style={{width:7,height:7,borderRadius:"50%",background:"#10b981"}}/>
+          <span style={{fontSize:10,color:"#10b981",fontWeight:700}}>LIVE</span>
+        </div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:13,display:"flex",flexDirection:"column",gap:10,background:"#fafafa"}}>
+        {msgs.map((m,i)=>(
+          <div key={i} style={{display:"flex",justifyContent:m.r==="user"?"flex-end":"flex-start"}}>
+            <div className={m.r==="user"?"chat-user":"chat-ai"}>
+              {m.r==="ai"&&<span style={{display:"block",fontSize:9,color:"#ea580c",fontWeight:800,marginBottom:4,letterSpacing:"1.2px"}}>CUREAI ⚡ GROQ</span>}
+              {m.t}
+            </div>
+          </div>
+        ))}
+        {load&&<div style={{display:"flex"}}><div className="chat-ai" style={{display:"flex",gap:5,alignItems:"center"}}>{[0,.18,.36].map(d=><div key={d} style={{width:7,height:7,borderRadius:"50%",background:"#ea580c",animation:"pulse 1s "+d+"s infinite"}}/>)}</div></div>}
+        {msgs.length===1&&!load&&<div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:6}}>
+          {suggestions.map(s=><button key={s} onClick={()=>setInp(s)} style={{background:"#fff7ed",border:"1px solid #fed7aa",color:"#ea580c",borderRadius:20,padding:"6px 12px",fontSize:11.5,fontFamily:"'Plus Jakarta Sans',sans-serif",cursor:"pointer",fontWeight:600}}>{s}</button>)}
+        </div>}
+        <div ref={bot}/>
+      </div>
+      <div style={{padding:"10px 12px",background:"#fff",borderRadius:"0 0 14px 14px",borderTop:"1px solid #ede9fe",display:"flex",gap:8,flexShrink:0}}>
+        <input className="inp" placeholder="Symptoms batao ya medicine ke baare mein poochho..." value={inp} onChange={e=>setInp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&send()} style={{flex:1,fontSize:14}}/>
+        <button className="btn-v" onClick={send} disabled={load} style={{padding:"10px 14px",flexShrink:0,background:"linear-gradient(135deg,#ea580c,#dc2626)"}}>{load?<Spin/>:"➤"}</button>
+      </div>
+    </div>
+  );
+}
+
+/* SLOT FREED POPUP */
+function SlotPopup({data,onBook,onDismiss}){
+  const[sec,setSec]=useState(30);
+  useEffect(()=>{const t=setInterval(()=>setSec(s=>{if(s<=1){onDismiss();return 0;}return s-1;}),1000);return()=>clearInterval(t);},[]);
+  return(
+    <div className="notif">
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:13}}>
+        <div style={{display:"flex",gap:10,alignItems:"center"}}>
+          <div style={{width:40,height:40,borderRadius:11,background:"linear-gradient(135deg,#7c3aed,#4f46e5)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>🔔</div>
+          <div><div style={{fontWeight:800,color:"#1e1535",fontSize:14}}>Slot Just Freed Up!</div><div style={{color:"#9ca3af",fontSize:11}}>You are #1 on the waitlist</div></div>
+        </div>
+        <button onClick={onDismiss} style={{background:"none",border:"none",color:"#9ca3af",fontSize:18,cursor:"pointer"}}>✕</button>
+      </div>
+      <div style={{background:"#f3f0ff",border:"1px solid #c4b5fd",borderRadius:11,padding:"11px 13px",marginBottom:13}}>
+        <div style={{color:"#9ca3af",fontSize:10,fontWeight:800,marginBottom:3}}>AVAILABLE NOW</div>
+        <div style={{fontWeight:700,color:"#9ca3af",fontSize:13.5}}>{data.drName}</div>
+        <div style={{color:"#6b7280",fontSize:12,marginTop:3}}>🕒 {data.slot} • ₹{data.fees} • 📍 {data.city}</div>
+      </div>
+      <div style={{display:"flex",gap:8}}>
+        <button className="btn-v" onClick={onBook} style={{flex:1,padding:"10px",fontSize:13}}>Book This Slot →</button>
+        <button className="btn-ghost" onClick={onDismiss} style={{fontSize:11,padding:"10px 12px"}}>Skip ({sec}s)</button>
+      </div>
+      <div style={{height:3,background:"#fafafa",borderRadius:3,marginTop:11,overflow:"hidden"}}>
+        <div style={{height:"100%",background:"linear-gradient(90deg,#7c3aed,#4f46e5)",width:((sec/30)*100)+"%",transition:"width 1s linear",borderRadius:3}}/>
+      </div>
+    </div>
+  );
+}
+
+/* BOOK MODAL */
+function BookModal({doc,user,onClose,onBook,onJoinWaitlist}){
+  const[sel,setSel]=useState(null);const[notes,setNotes]=useState("");const[done,setDone]=useState(false);const[wlDone,setWlDone]=useState(null);const[bookErr,setBookErr]=useState("");
+  const today=new Date().toLocaleDateString("en-IN");
+  const todayApts=user.apts.filter(a=>a.status==="Confirmed"&&a.date===today);
+  const myTodaySlots=todayApts.map(a=>a.slot);
+  const alreadyThisDr=todayApts.some(a=>a.drId===doc.id);
+  const joinWL=s=>{onJoinWaitlist(doc.id,s);setWlDone(s);};
+  const myWlPos=s=>(doc.waitlist||{})[s]?.findIndex(w=>w.email===user.email)??-1;
+  const go=()=>{
+    setBookErr("");
+    if(!sel)return;
+    if(alreadyThisDr)return setBookErr("You already have an appointment with "+doc.name+" today.");
+    if(myTodaySlots.includes(sel))return setBookErr("You already have an appointment at "+sel+" today.");
+    onBook(doc,sel,notes);setDone(true);setTimeout(onClose,2600);
+  };
+  return(
+    <div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal">
+        {done?<div style={{textAlign:"center",padding:"28px 0"}}>
+          <div style={{fontSize:54,marginBottom:12}}>✅</div>
+          <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:21,color:"#1e1535",marginBottom:6}}>Appointment Confirmed!</h3>
+          <p style={{color:"#9ca3af"}}>Slot <strong style={{color:"#7c3aed"}}>{sel}</strong> with <strong style={{color:"#0e7490"}}>{doc.name}</strong></p>
+          {(doc.hospital||doc.hospitalAddress||doc.city)&&(
+            <div style={{marginTop:18}}>
+              <div style={{fontSize:12,color:"#9ca3af",marginBottom:10}}>
+                📍 {doc.hospital?<strong>{doc.hospital}</strong>:doc.name}<br/>
+                <span style={{fontSize:11}}>{doc.hospitalAddress||""}{doc.hospitalAddress&&", "}{doc.city||"Phagwara"}, {doc.state||"Punjab"}</span>
+              </div>
+              <button onClick={()=>{const q=encodeURIComponent((doc.hospital||doc.name)+", "+(doc.hospitalAddress||"")+", "+(doc.city||"Phagwara")+", "+(doc.state||"Punjab")+", India");window.open("https://www.google.com/maps/search/?api=1&query="+q,"_blank");}} style={{background:"linear-gradient(135deg,#0ea5e9,#0284c7)",color:"#fff",border:"none",borderRadius:12,padding:"12px 22px",fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:"0 4px 14px rgba(14,165,233,.38)",display:"inline-flex",alignItems:"center",gap:8,marginTop:4}}>
+                🗺️ Open in Google Maps
+              </button>
+            </div>
+          )}
+        </div>
+        :<>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+            <div><h3 style={{fontFamily:"'Playfair Display',serif",fontSize:19,color:"#1e1535"}}>Book Appointment</h3><p style={{color:"#9ca3af",fontSize:11,marginTop:2}}>🟢 Free = Book directly • 🔴 Booked = Join waitlist</p></div>
+            <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#9ca3af",padding:4}}>✕</button>
+          </div>
+          <div style={{display:"flex",gap:11,padding:13,background:"#fafafa",borderRadius:12,border:"1px solid #e2e8f0",marginBottom:16}}>
+            <Av name={doc.name} sz={44}/><div style={{flex:1}}><div style={{fontWeight:700,color:"#1e1535",fontSize:14}}>{doc.name}</div><span className="tag tag-v" style={{marginTop:3,display:"inline-block"}}>{doc.spec}</span><div style={{marginTop:6,color:"#7c3aed",fontWeight:800,fontSize:16}}>₹{doc.fees}</div>
+            {doc.hospital&&<div style={{marginTop:7,background:"#f0f9ff",borderRadius:8,padding:"6px 10px",border:"1px solid #bae6fd"}}>
+              <div style={{fontWeight:700,color:"#0369a1",fontSize:12}}>🏥 {doc.hospital}</div>
+              {doc.hospitalAddress&&<div style={{color:"#9ca3af",fontSize:11,marginTop:2}}>📍 {doc.hospitalAddress}, {doc.city}</div>}
+            </div>}
+            </div>
+          </div>
+          {alreadyThisDr&&<div style={{background:"#fff1f2",border:"1px solid #fca5a5",borderRadius:10,padding:"10px 13px",marginBottom:13,color:"rgba(220,38,38,.35)",fontSize:12.5}}>⚠️ You already have an appointment with this doctor today.</div>}
+          <div style={{marginBottom:15}}>
+            <label className="lbl">TIME SLOTS</label>
+            <div className="slot-grid" style={{display:"flex",flexWrap:"wrap",gap:7}}>
+              {doc.slots.map(s=>{
+                const drBooked=doc.bk.includes(s);
+                const userHasSlot=myTodaySlots.includes(s);
+                const pos=myWlPos(s);const wlCount=(doc.waitlist||{})[s]?.length||0;
+                if(userHasSlot&&!drBooked)return <div key={s} className="slot-chip" style={{background:"#fef9c3",borderColor:"rgba(217,119,6,.5)",color:"rgba(217,119,6,.45)",cursor:"not-allowed"}}>🔒 {s}</div>;
+                if(!drBooked)return <button key={s} className={"slot-chip"+(sel===s?" sel":"")} onClick={()=>{setSel(s);setBookErr("");}}>🟢 {s}</button>;
+                if(pos>=0)return <div key={s} className="slot-chip mywl" title={"You're #"+(pos+1)+" on waitlist"}>⏳ {s} <span style={{fontSize:10,opacity:.65}}>#{pos+1}</span></div>;
+                return <button key={s} className="slot-chip wl-join" onClick={()=>joinWL(s)}>🔴 {s}{wlCount>0&&<span style={{fontSize:10,marginLeft:3,opacity:.7}}>({wlCount})</span>}</button>;
+              })}
+            </div>
+          </div>
+          {wlDone&&<div style={{background:"#fef9c3",border:"1px solid #fcd34d",borderRadius:10,padding:"10px 13px",marginBottom:13,color:"rgba(217,119,6,.45)",fontSize:12.5}}>✅ Joined waitlist for <strong>{wlDone}</strong>! You'll get a popup when it frees up.</div>}
+          {bookErr&&<div style={{background:"#fff1f2",border:"1px solid #fca5a5",borderRadius:10,padding:"10px 13px",marginBottom:13,color:"rgba(220,38,38,.35)",fontSize:12.5}}>⚠️ {bookErr}</div>}
+          <div style={{marginBottom:15}}><label className="lbl">NOTES FOR DOCTOR (Optional)</label><textarea className="inp" rows={3} placeholder="Briefly describe your symptoms..." value={notes} onChange={e=>setNotes(e.target.value)} style={{resize:"none"}}/></div>
+          <button className="btn-v" onClick={go} disabled={!sel||alreadyThisDr} style={{width:"100%",padding:"13px",fontSize:14,opacity:alreadyThisDr?.5:1}}>Confirm {sel?"@ "+sel:""}</button>
+        </>}
+      </div>
+    </div>
+  );
+}
+
+/* PATIENT DASHBOARD */
+function PatientDash({user,setUser,docs,setDocs,onLogout}){
+  const[tab,setTab]=useState("home");const[srch,setSrch]=useState("");const[fspec,setFspec]=useState("All");
+  const[bookDoc,setBookDoc]=useState(null);const[profOpen,setProfOpen]=useState(false);
+  const[pe,setPe]=useState({age:user.age||"",city:user.city||"",state:user.state||"",address:user.address||""});
+  const[slotPopup,setSlotPopup]=useState(null);const[toast,setToast]=useState(null);
+  const[incomingCall,setIncomingCall]=useState(null);
+  const[patActiveCall,setPatActiveCall]=useState(null);
+  const[unreadChat,setUnreadChat]=useState(0);
+  const lastReadRef=useRef(LS.get("cl_last_read_"+user.email,0));
+  const patKeyGlobal=useMemo(()=>user.email.toLowerCase().replace(/\./g,"_").replace(/@/g,"__at__"),[user.email]);
+
+  // Track unread messages from doctors
+  useEffect(()=>{
+    const DB_URL="https://curelink-703e5-default-rtdb.firebaseio.com";
+    const checkUnread=()=>{
+      fetch(`${DB_URL}/curelink/users/${patKeyGlobal}/chats.json`)
+        .then(r=>r.json())
+        .then(allChats=>{
+          if(!allChats)return;
+          let count=0;
+          Object.values(allChats).forEach(chat=>{
+            Object.values(chat).forEach(msg=>{
+              if(msg.sender==="doctor"&&(msg.ts||0)>lastReadRef.current)count++;
+            });
+          });
+          setUnreadChat(count);
+        }).catch(()=>{});
+    };
+    checkUnread();
+    const iv=setInterval(checkUnread,4000);
+    return()=>clearInterval(iv);
+  },[patKeyGlobal]);
+
+  // Clear unread when chat tab opened
+  useEffect(()=>{
+    if(tab==="chat"){
+      const now=Date.now();
+      lastReadRef.current=now;
+      LS.set("cl_last_read_"+user.email,now);
+      setUnreadChat(0);
+    }
+  },[tab]);
+
+  // Global incoming call listener for patient
+  useEffect(()=>{
+    const unsub=FB.onCallsForPatient(patKeyGlobal,(call)=>{
+      if(call&&call.status==="ringing"&&call.callerRole==="doctor"&&Date.now()-call.ts<65000){
+        setIncomingCall(call);
+      }
+    });
+    return typeof unsub==="function"?unsub:()=>{};
+  },[patKeyGlobal]);
+
+  useEffect(()=>{
+    const sync=()=>setDocs(LS.get("cl_docs",[]));
+    window.addEventListener("focus",sync);
+    document.addEventListener("visibilitychange",()=>document.visibilityState==="visible"&&sync());
+    return()=>window.removeEventListener("focus",sync);
+  },[]);
+  useEffect(()=>{
+    const check=(freed,fresh)=>{
+      const recent=(freed||LS.get("cl_freed_slots",[])).filter(f=>Date.now()-f.ts<15000);
+      const freshDocs=fresh||LS.get("cl_docs",[]);
+      for(const ev of recent){
+        const d=freshDocs.find(x=>x.id===ev.drId);if(!d)continue;
+        const wl=(d.waitlist||{})[ev.slot]||[];
+        if(wl[0]?.email===user.email){
+          setSlotPopup({drId:ev.drId,drName:d.name,slot:ev.slot,fees:d.fees,city:d.city,state:d.state});
+          LS.set("cl_freed_slots",(freed||[]).filter(f=>f.ts!==ev.ts));
+          if(fresh)setDocs(fresh);break;
+        }
+      }
+    };
+    check();
+    const iv=setInterval(()=>check(),2000);
+    const h=e=>{if(e.key==="cl_freed_slots"||e.key==="cl_docs"){setDocs(LS.get("cl_docs",[]));check();}};
+    window.addEventListener("storage",h);
+    // 🔥 Firebase freed slot listener
+    const unsubFreed=FB.onFreed(ev=>{
+      const fresh=LS.get("cl_docs",[]);
+      check([ev],fresh);
+    });
+    return()=>{clearInterval(iv);window.removeEventListener("storage",h);unsubFreed();};
+  },[user.email]);
+
+  const myWL=docs.flatMap(doc=>Object.entries(doc.waitlist||{}).flatMap(([slot,wl])=>{
+    const pos=wl.findIndex(w=>w.email===user.email);if(pos===-1)return[];
+    return[{drId:doc.id,drName:doc.name,spec:doc.spec,fees:doc.fees,slot,position:pos+1,ahead:pos,total:wl.length,city:doc.city}];
+  }));
+
+  const book=(doctor,slot,notes)=>{
+    const a={id:Date.now(),drId:doctor.id,drName:doctor.name,spec:doctor.spec,slot,date:new Date().toLocaleDateString("en-IN"),fees:doctor.fees,notes,status:"Confirmed",hospital:doctor.hospital||"",hospitalAddress:doctor.hospitalAddress||"",city:doctor.city||"Phagwara",state:doctor.state||"Punjab"};
+    setUser(u=>({...u,apts:[...u.apts,a]}));
+    setDocs(ds=>ds.map(d=>{if(d.id!==doctor.id)return d;const wl={...(d.waitlist||{})};if(wl[slot])wl[slot]=wl[slot].filter(w=>w.email!==user.email);return{...d,bk:[...d.bk,slot],waitlist:wl,apts:[...d.apts,{...a,pName:user.name,pPhone:user.phone,pEmail:user.email}]};}));
+  };
+  const joinWL=(drId,slot)=>{
+    setDocs(ds=>ds.map(d=>{if(d.id!==drId)return d;const wl={...(d.waitlist||{})};const sw=wl[slot]||[];if(sw.some(w=>w.email===user.email))return d;wl[slot]=[...sw,{id:Date.now(),pName:user.name,pPhone:user.phone,email:user.email,joinedAt:new Date().toISOString()}];return{...d,waitlist:wl};}));
+    setToast({msg:"Added to waiting list! Stay on this page.",type:"notify"});
+  };
+  const cancelApt=id=>{
+    const a=user.apts.find(x=>x.id===id);if(!a)return;
+    setUser(u=>({...u,apts:u.apts.map(x=>x.id===id?{...x,status:"Cancelled"}:x)}));
+    setDocs(ds=>ds.map(d=>{if(d.name!==a.drName)return d;const ev={drId:d.id,drName:d.name,slot:a.slot,cancelledBy:user.name,ts:Date.now()};const freed=LS.get("cl_freed_slots",[]);freed.push(ev);LS.set("cl_freed_slots",freed);FB.pushFreed(ev);return{...d,bk:d.bk.filter(s=>s!==a.slot),apts:d.apts.map(x=>x.id===id?{...x,status:"Cancelled by Patient"}:x)};}));
+    setToast({msg:"Appointment cancelled. Waiting list notified!",type:"notify"});
+  };
+
+  const allSpecs=["All",...Array.from(new Set(docs.map(d=>d.spec)))];
+  const filtered=docs.filter(d=>{
+    const ms=fspec==="All"||d.spec===fspec;
+    const mq=d.name.toLowerCase().includes(srch.toLowerCase())||d.spec.toLowerCase().includes(srch.toLowerCase())||(d.city||"").toLowerCase().includes(srch.toLowerCase());
+    return ms&&mq;
+  });
+  const navItems=[{k:"home",i:"🏠",l:"Home"},{k:"doctors",i:"🩺",l:"Doctors"},{k:"apts",i:"📅",l:"Appts"},{k:"waitlist",i:"⏳",l:"Waitlist",badge:myWL.length||null},{k:"chat",i:"💬",l:"Chat",badge:unreadChat||null},{k:"rx",i:"💊",l:"Rx"},{k:"health",i:"❤️",l:"Health"},{k:"ai",i:"🤖",l:"AI Check"}];
+
+  return(
+    <div className="dash-wrap" style={{display:"flex",minHeight:"100vh",background:"#f6f4ff"}}>
+      {toast&&<Toast msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
+      {slotPopup&&<SlotPopup data={slotPopup} onBook={()=>{const d=docs.find(x=>x.id===slotPopup.drId);if(d)setBookDoc(d);setSlotPopup(null);}} onDismiss={()=>setSlotPopup(null)}/>}
+
+      {/* DESKTOP SIDEBAR */}
+      <div className="side-nav" style={{width:220,background:"#fff",borderRight:"1px solid #e2e8f0",display:"flex",flexDirection:"column",padding:"18px 11px",flexShrink:0,position:"sticky",top:0,height:"100vh",overflow:"hidden"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:24,padding:"0 5px"}}>
+          <div style={{width:26,height:26,borderRadius:8,background:"linear-gradient(135deg,#7c3aed,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>+</div>
+          <span style={{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:900,background:"linear-gradient(135deg,#7c3aed,#06b6d4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>CureLink</span>
+          <span className="tag tag-v" style={{fontSize:9,marginLeft:"auto",padding:"1px 6px"}}>PATIENT</span>
+        </div>
+        {navItems.map(n=>(
+          <div key={n.k} className={"nav"+(tab===n.k?" onV":"")} onClick={()=>setTab(n.k)}>
+            <span>{n.i}</span><span style={{flex:1}}>{n.l}</span>
+            {n.badge&&<span style={{background:"#7c3aed",color:"#1e1535",borderRadius:"20px",padding:"1px 7px",fontSize:10,fontWeight:800}}>{n.badge}</span>}
+          </div>
+        ))}
+        <div style={{flex:1}}/>
+        <div style={{borderTop:"1px solid #ede9fe",paddingTop:9}}>
+          <div className="nav" onClick={()=>setProfOpen(true)}><span>👤</span><span>My Profile</span></div>
+          <div className="nav" onClick={onLogout} style={{color:"#e11d48"}}><span>🚪</span><span>Logout</span></div>
+        </div>
+      </div>
+
+      {/* MAIN CONTENT */}
+      <div className="main-content" style={{flex:1,overflowY:"auto",padding:"20px 22px"}}>
+        <div className="top-header" style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,padding:"0 0 0 0"}}>
+          <div>
+            <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(20px,5vw,26px)",color:"#1e1535",fontWeight:700}}>
+              {tab==="home"&&("Hello, "+user.name.split(" ")[0]+" 👋")}
+              {tab==="doctors"&&"Find a Doctor"}
+              {tab==="apts"&&"My Appointments"}
+              {tab==="waitlist"&&"My Waiting List"}
+              {tab==="chat"&&"Chat with Doctor"}
+              {tab==="rx"&&"My Prescriptions"}
+              {tab==="health"&&"My Health Data"}
+              {tab==="ai"&&"AI Health Check"}
+            </h2>
+            <p style={{color:"#d1d5db",fontSize:11,marginTop:2}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+          </div>
+          <button onClick={()=>setProfOpen(true)} style={{display:"flex",alignItems:"center",gap:7,background:"#fafafa",border:"1px solid #e2e8f0",borderRadius:9,padding:"7px 11px",cursor:"pointer",flexShrink:0}}>
+            <Av name={user.name} sz={26}/><span style={{fontWeight:600,color:"#6b7280",fontSize:12,display:"none"}} className="hide-mobile">{user.name}</span>
+          </button>
+        </div>
+
+        {tab==="home"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:16}}>
+            <div className="stats-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
+              {[{i:"📅",l:"Total",v:user.apts.length,c:"#7c3aed"},{i:"✅",l:"Confirmed",v:user.apts.filter(a=>a.status==="Confirmed").length,c:"#6ee7b7"},{i:"🏥",l:"Doctors",v:docs.filter(d=>d.on).length,c:"#0e7490"},{i:"⏳",l:"Waitlist",v:myWL.length,c:"rgba(217,119,6,.45)"}].map(s=>(
+                <div key={s.l} className="stat"><div style={{fontSize:20,marginBottom:4}}>{s.i}</div><div style={{fontSize:20,fontWeight:800,color:s.c}}>{s.v}</div><div style={{color:"#9ca3af",fontSize:10,marginTop:2}}>{s.l}</div></div>
+              ))}
+            </div>
+            <div style={{background:"linear-gradient(135deg,#f6f4ff 0%,#fdf4ff 50%,#f0fdf9 100%)",borderRadius:14,padding:"18px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",border:"1px solid #e2e8f0",flexWrap:"wrap",gap:12}}>
+              <div><h3 style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:"#1e1535",marginBottom:3}}>Book a Doctor Appointment</h3><p style={{color:"#9ca3af",fontSize:12}}>{docs.filter(d=>d.on).length} doctors available nearby</p></div>
+              <button className="btn-v" onClick={()=>setTab("doctors")}>Find Doctors →</button>
+            </div>
+            {myWL.length>0&&<div>
+              <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:"#1e1535",marginBottom:10}}>⏳ Your Waiting List</h3>
+              {myWL.map(e=>(
+                <div key={e.drId+e.slot} className="row">
+                  <div style={{display:"flex",gap:10,alignItems:"center"}}><Av name={user.name} sz={34} g={e.ahead===0?["#059669","#0891b2"]:["#7c3aed","#4f46e5"]}/>
+                    <div><div style={{fontWeight:700,color:"#1e1535",fontSize:13}}>{user.name}</div><div style={{fontSize:11,color:"#9ca3af",marginTop:1}}>{e.drName} • 🕒 {e.slot}</div></div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{background:e.ahead===0?"linear-gradient(135deg,#059669,#0891b2)":"linear-gradient(135deg,#d97706,#b45309)",borderRadius:10,padding:"4px 11px",display:"inline-block"}}>
+                      <span style={{color:"#1e1535",fontWeight:800,fontSize:15}}>#{e.position}</span>
+                    </div>
+                    <div style={{fontSize:10,color:"#9ca3af",marginTop:2}}>{e.ahead===0?"Next! 🎉":e.ahead+" ahead"}</div>
+                  </div>
+                </div>
+              ))}
+            </div>}
+            <div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
+                <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:"#1e1535"}}>Available Doctors</h3>
+                <button className="btn-ghost" onClick={()=>setTab("doctors")} style={{fontSize:11,padding:"6px 13px"}}>See All</button>
+              </div>
+              <div className="dr-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:12}}>
+                {docs.filter(d=>d.on).slice(0,4).map(d=>(
+                  <div key={d.id} className="dr-card" onClick={()=>setBookDoc(d)}>
+                    <div style={{display:"flex",gap:9,alignItems:"flex-start",marginBottom:9}}><Av name={d.name} sz={36}/><div><div style={{fontWeight:700,color:"#1e1535",fontSize:13}}>{d.name}</div><span className="tag tag-v" style={{marginTop:3,display:"inline-block",fontSize:10}}>{d.spec}</span></div><span className="tag tag-g" style={{marginLeft:"auto",flexShrink:0,fontSize:9}}>● Live</span></div>
+                    {d.hospital&&<div style={{fontSize:11,color:"#0e7490",fontWeight:600,marginBottom:5,display:"flex",alignItems:"center",gap:4}}>🏥 {d.hospital}</div>}
+                    <div style={{fontSize:11,color:"#9ca3af",marginBottom:9,display:"flex",justifyContent:"space-between"}}><span>📍 {d.city}</span><span style={{color:"#7c3aed",fontWeight:800}}>₹{d.fees}</span></div>
+                    <button className="btn-v" style={{width:"100%",padding:"8px",fontSize:12}}>Book Now</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab==="doctors"&&(
+          <div>
+            <div style={{display:"flex",gap:9,marginBottom:16,flexWrap:"wrap"}}>
+              <input className="inp" placeholder="🔍 Search name, speciality or city..." value={srch} onChange={e=>setSrch(e.target.value)} style={{flex:"1 1 180px"}}/>
+              <select className="inp" value={fspec} onChange={e=>setFspec(e.target.value)} style={{flex:"0 1 160px",cursor:"pointer"}}>{allSpecs.map(s=><option key={s}>{s}</option>)}</select>
+            </div>
+            <div className="dr-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(250px,1fr))",gap:13}}>
+              {filtered.map(d=>(
+                <div key={d.id} className={"dr-card"+(!d.on?" off":"")} onClick={()=>d.on&&setBookDoc(d)}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
+                    <div style={{display:"flex",gap:10,alignItems:"flex-start"}}><Av name={d.name} sz={40}/><div><div style={{fontWeight:700,color:"#1e1535",fontSize:13}}>{d.name}</div><div style={{fontSize:10,color:"#d1d5db",marginBottom:3}}>Reg: {d.id}</div><span className="tag tag-v" style={{fontSize:10}}>{d.spec}</span></div></div>
+                    <span className={"tag"+(d.on?" tag-g":" tag-r")} style={{fontSize:10,flexShrink:0}}>{d.on?"● Online":"○ Offline"}</span>
+                  </div>
+                  {d.hospital&&<div style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:8,padding:"6px 10px",marginBottom:9,fontSize:11}}>
+                    <div style={{fontWeight:700,color:"#0369a1"}}>🏥 {d.hospital}</div>
+                    {d.hospitalAddress&&<div style={{color:"#9ca3af",marginTop:2,fontSize:10.5}}>📍 {d.hospitalAddress}, {d.city}</div>}
+                  </div>}
+                  {d.quote&&<p style={{fontSize:11,color:"#9ca3af",fontStyle:"italic",marginBottom:9,lineHeight:1.5}}>"{d.quote.slice(0,55)}{d.quote.length>55?"...":""}"</p>}
+                  <div style={{fontSize:11,color:"#9ca3af",display:"flex",gap:9,marginBottom:10,flexWrap:"wrap"}}><span>📍 {d.city}</span><span>🕒 {d.slots.length-d.bk.length} free</span></div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <span style={{fontWeight:800,color:"#7c3aed",fontSize:15}}>₹{d.fees}</span>
+                    <button className={d.on?"btn-v":"btn-ghost"} disabled={!d.on} style={{fontSize:12,padding:"7px 14px",opacity:d.on?1:.5}}>{d.on?"Book / Waitlist":"Unavailable"}</button>
+                  </div>
+                </div>
+              ))}
+              {filtered.length===0&&<div style={{gridColumn:"1/-1",textAlign:"center",padding:"50px 0",color:"#d1d5db"}}><div style={{fontSize:38}}>🔍</div><div style={{marginTop:9}}>No doctors found</div></div>}
+            </div>
+          </div>
+        )}
+
+        {tab==="apts"&&(
+          <div>
+            {user.apts.length===0?<div style={{textAlign:"center",padding:"60px 0",color:"#d1d5db"}}><div style={{fontSize:40}}>📅</div><div style={{marginTop:9,fontSize:13}}>No appointments yet</div><button className="btn-v" onClick={()=>setTab("doctors")} style={{marginTop:14,fontSize:13}}>Book your first →</button></div>
+            :[...user.apts].reverse().map(a=>(
+              <div key={a.id} className="row" style={{padding:"13px 15px"}}>
+                <div style={{display:"flex",gap:10,alignItems:"center"}}><Av name={a.drName} sz={38}/>
+                  <div><div style={{fontWeight:700,color:"#1e1535",fontSize:13}}>{a.drName}</div><span className="tag tag-v" style={{display:"inline-block",marginTop:2,fontSize:10}}>{a.spec}</span><div style={{marginTop:4,fontSize:11,color:"#9ca3af",display:"flex",gap:7,flexWrap:"wrap"}}><span>📅 {a.date}</span><span>🕒 {a.slot}</span><span>💰 ₹{a.fees}</span></div>{a.notes&&<div style={{marginTop:2,fontSize:10.5,color:"#d1d5db"}}>📋 {a.notes}</div>}</div>
+                </div>
+                <div style={{display:"flex",gap:7,alignItems:"center",flexWrap:"wrap"}}>
+                  <span className={"tag"+(a.status==="Confirmed"?" tag-g":" tag-r")} style={{fontSize:10}}>{a.status}</span>
+                  {a.status==="Confirmed"&&<button className="btn-red" onClick={()=>cancelApt(a.id)}>Cancel</button>}
+                  {a.status==="Confirmed"&&(a.hospital||a.hospitalAddress||a.city)&&<button onClick={()=>{const q=encodeURIComponent((a.hospital||a.drName)+", "+(a.hospitalAddress||"")+", "+(a.city||"Phagwara")+", "+(a.state||"Punjab")+", India");window.open("https://www.google.com/maps/search/?api=1&query="+q,"_blank");}} style={{background:"#e0f7fe",color:"#0369a1",border:"1.5px solid #7dd3fc",borderRadius:8,padding:"7px 12px",fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:12,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:5}}>🗺️ Maps</button>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab==="waitlist"&&(
+          <div>
+            {myWL.length===0?<div style={{textAlign:"center",padding:"60px 0",color:"#d1d5db"}}><div style={{fontSize:40}}>⏳</div><div style={{marginTop:9,fontSize:13}}>Not on any waiting list</div><p style={{fontSize:11,marginTop:6,opacity:.55}}>Tap a 🔴 booked slot to join its waitlist</p></div>
+            :<div>
+              <div style={{marginBottom:13,padding:11,background:"#fef9c3",border:"1px solid #fde68a",borderRadius:11,fontSize:12,color:"#9ca3af"}}>💡 You'll get a popup when your slot frees up. Keep this page open!</div>
+              {myWL.map(e=>(
+                <div key={e.drId+e.slot} style={{marginBottom:12,background:"#fff",border:"1.5px solid "+(e.ahead===0?"#6ee7b7":"#ede9fe"),borderRadius:14,overflow:"hidden"}}>
+                  <div style={{height:3,background:e.ahead===0?"linear-gradient(90deg,#10b981,#06b6d4)":"linear-gradient(90deg,#d97706,#b45309)"}}/>
+                  <div style={{padding:"15px 16px"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:13}}>
+                      <Av name={user.name} sz={46} g={e.ahead===0?["#059669","#0891b2"]:["#7c3aed","#4f46e5"]}/>
+                      <div style={{flex:1}}><div style={{fontWeight:800,color:"#1e1535",fontSize:14}}>{user.name}</div><div style={{color:"#9ca3af",fontSize:11,marginTop:1}}>+91 {user.phone}</div></div>
+                      <div style={{textAlign:"center",background:e.ahead===0?"linear-gradient(135deg,#059669,#0891b2)":"linear-gradient(135deg,#d97706,#b45309)",borderRadius:12,padding:"9px 16px",minWidth:64}}>
+                        <div style={{color:"#6b7280",fontSize:9,fontWeight:800,letterSpacing:"1px",marginBottom:2}}>YOUR NO.</div>
+                        <div style={{color:"#1e1535",fontWeight:900,fontSize:26,lineHeight:1}}>#{e.position}</div>
+                        <div style={{color:"#fafafa",fontSize:9,marginTop:1}}>in queue</div>
+                      </div>
+                    </div>
+                    <div style={{background:"#fafafa",border:"1px solid #e2e8f0",borderRadius:9,padding:"9px 12px",display:"flex",alignItems:"center",gap:9}}>
+                      <Av name={e.drName} sz={32}/><div style={{flex:1}}><div style={{fontWeight:600,color:"#4b5563",fontSize:12}}>{e.drName}</div><div style={{fontSize:11,color:"#9ca3af",marginTop:1,display:"flex",gap:7,flexWrap:"wrap"}}><span>🩺 {e.spec}</span><span>🕒 {e.slot}</span><span>💰 ₹{e.fees}</span></div></div>
+                    </div>
+                    <div style={{marginTop:9,fontSize:12,color:e.ahead===0?"#059669":"#9ca3af",fontWeight:e.ahead===0?700:400}}>
+                      {e.ahead===0?"🎉 You're NEXT! Slot popup coming soon.":e.ahead===1?"1 patient ahead of you":e.ahead+" patients ahead of you"}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>}
+          </div>
+        )}
+
+        {tab==="chat"&&<PatChat user={user} docs={docs}/>}
+        {tab==="rx"&&<PatRx user={user}/>}
+        {tab==="health"&&<PatHealth user={user}/>}
+        {tab==="ai"&&<div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",overflow:"hidden"}}><AiCheck/></div>}
+      </div>
+
+  {/* Incoming call popup */}
+      {incomingCall&&!patActiveCall&&<IncomingCallPopup
+        callerName={incomingCall.callerName||"Doctor"}
+        roomName={incomingCall.roomName}
+        dailyUrl={incomingCall.dailyUrl||""}
+        callKey={incomingCall._key}
+        onAccept={()=>{
+          const url=incomingCall.dailyUrl||"";
+          if(incomingCall._key)FB.clearCallByKey(incomingCall._key);
+          setIncomingCall(null);
+          if(url)setPatActiveCall({url,callerName:incomingCall.callerName||"Doctor"});
+        }}
+        onDecline={()=>{if(incomingCall._key)FB.clearCallByKey(incomingCall._key);setIncomingCall(null);}}
+      />}
+      {patActiveCall&&<VideoCallFrame
+        roomUrl={patActiveCall.url}
+        callerName={patActiveCall.callerName||"Doctor"}
+        onEnd={()=>setPatActiveCall(null)}
+      />}
+
+      {/* SOS floating button */}
+      <SOSButton user={user}/>
+
+      {/* MOBILE BOTTOM NAV */}
+      <div className="mob-nav">
+        {navItems.map(n=>(
+          <button key={n.k} className={"mob-nav-btn"+(tab===n.k?" actV":"")} onClick={()=>setTab(n.k)}>
+            {n.badge&&<span className="badge">{n.badge}</span>}
+            <span style={{fontSize:20}}>{n.i}</span>
+            <span>{n.l}</span>
+          </button>
+        ))}
+        <button className="mob-nav-btn" onClick={()=>setProfOpen(true)}>
+          <span style={{fontSize:20}}>👤</span><span>Profile</span>
+        </button>
+      </div>
+
+      {profOpen&&<div className="overlay" onClick={e=>e.target===e.currentTarget&&setProfOpen(false)}>
+        <div className="modal">
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h3 style={{fontFamily:"'Playfair Display',serif",fontSize:19,color:"#1e1535"}}>My Profile</h3><button onClick={()=>setProfOpen(false)} style={{background:"none",border:"none",fontSize:19,cursor:"pointer",color:"#9ca3af",padding:4}}>✕</button></div>
+          <div style={{display:"flex",gap:11,alignItems:"center",marginBottom:16,padding:12,background:"#faf5ff",borderRadius:11,border:"1px solid #ddd6fe"}}><Av name={user.name} sz={44}/><div><div style={{fontWeight:700,color:"#1e1535",fontSize:14}}>{user.name}</div><div style={{color:"#9ca3af",fontSize:11,marginTop:2}}>{user.email}</div><div style={{color:"#9ca3af",fontSize:11,marginTop:1}}>+91 {user.phone}</div></div></div>
+          <div className="form-grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:11}}>
+            {[["Age","age","number"],["City","city","text"],["State","state","text"],["Address","address","text"]].map(([lb,k,t])=>(
+              <div key={k} style={{gridColumn:k==="address"?"1/-1":"auto"}}><label className="lbl">{lb.toUpperCase()}</label><input className="inp" type={t} value={pe[k]||""} onChange={e=>setPe({...pe,[k]:e.target.value})} placeholder={"Enter "+lb.toLowerCase()}/></div>
+            ))}
+          </div>
+          <div style={{display:"flex",gap:9,marginTop:15}}>
+            <button className="btn-ghost" onClick={onLogout} style={{flex:"0 0 auto",color:"rgba(220,38,38,.75)"}}>Logout 🚪</button>
+            <button className="btn-v" onClick={()=>{setUser(u=>({...u,...pe}));setProfOpen(false);}} style={{flex:1,padding:12}}>Save Profile</button>
+          </div>
+        </div>
+      </div>}
+      {bookDoc&&<BookModal doc={bookDoc} user={user} onClose={()=>setBookDoc(null)} onBook={book} onJoinWaitlist={joinWL}/>}
+    </div>
+  );
+}
+
+/* DOCTOR DASHBOARD */
+function DoctorDash({loginInfo,docs,setDocs,onLogout}){
+  const[tab,setTab]=useState("home");const[profOpen,setProfOpen]=useState(false);const[slotEdit,setSlotEdit]=useState(false);
+  const[tmpSlots,setTmpSlots]=useState([]);const[toast,setToast]=useState(null);
+  const[qi]=useState(Math.floor(Math.random()*QUOTES.length));
+  const[sosAlert,setSosAlert]=useState(null);
+  const[incomingCall,setIncomingCall]=useState(null);
+  const[drActiveCall,setDrActiveCall]=useState(null);
+
+  // Global incoming call listener for doctor
+  useEffect(()=>{
+    const unsub=FB.onCallsForDoctor(loginInfo.id,(call)=>{
+      if(call&&call.status==="ringing"&&call.callerRole==="patient"&&Date.now()-call.ts<65000){
+        setIncomingCall(call);
+      }
+    });
+    return typeof unsub==="function"?unsub:()=>{};
+  },[loginInfo.id]);
+  const doc=docs.find(d=>d.id===loginInfo.id)||loginInfo;
+  const[pe,setPe]=useState({age:doc.age||"",city:"Phagwara",state:"Punjab",fees:doc.fees||"",quote:doc.quote||"",hospital:doc.hospital||"",hospitalAddress:doc.hospitalAddress||""});
+
+  useEffect(()=>{
+    const sync=()=>setDocs(LS.get("cl_docs",[]));
+    window.addEventListener("focus",sync);document.addEventListener("visibilitychange",()=>document.visibilityState==="visible"&&sync());
+    return()=>window.removeEventListener("focus",sync);
+  },[]);
+
+  /* 🚨 SOS real-time listener — waits for Firebase to be ready */
+  useEffect(()=>{
+    let unsub=null;
+    const seenTs=new Set();
+    const handleNewSOS=(sos)=>{
+      if(!sos||!sos.ts)return;
+      const key=String(sos.ts)+"_"+(sos.patPhone||"");
+      if(seenTs.has(key))return;
+      seenTs.add(key);
+      if(Date.now()-sos.ts<120000){
+        setSosAlert(sos);
+        setSosLog(prev=>{
+          const entry={...sos,receivedAt:Date.now()};
+          const updated=[entry,...prev].slice(0,50);
+          LS.set("cl_sos_log_"+loginInfo.id,updated);
+          return updated;
+        });
+        try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.setValueAtTime(880,ctx.currentTime);g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.5);}catch(e){}
+      }
+    };
+    const connect=()=>{
+      if(!FB.ok)return;
+      unsub=FB.onSOS(handleNewSOS);
+    };
+    // Also poll localStorage for SOS (backup if Firebase fails)
+    const localPoll=setInterval(()=>{
+      const localSos=LS.get("cl_sos_latest",null);
+      if(localSos&&localSos.ts&&Date.now()-localSos.ts<30000){
+        handleNewSOS(localSos);
+      }
+    },3000);
+    let attempts=0;
+    const poll=setInterval(()=>{
+      attempts++;
+      if(FB.ok){clearInterval(poll);connect();}
+      else if(attempts>50){clearInterval(poll);}
+    },100);
+    return()=>{clearInterval(poll);clearInterval(localPoll);if(typeof unsub==="function")unsub();};
+  },[]);
+
+  /* Firebase handles real-time sync — polling removed */
+
+  const toggle=()=>setDocs(ds=>ds.map(d=>d.id===doc.id?{...d,on:!d.on}:d));
+  const cancelPat=(aptId,slot)=>{
+    setDocs(ds=>ds.map(d=>{if(d.id!==doc.id)return d;const ev={drId:d.id,drName:d.name,slot,cancelledBy:"Doctor",ts:Date.now()};const freed=LS.get("cl_freed_slots",[]);freed.push(ev);LS.set("cl_freed_slots",freed);FB.pushFreed(ev);return{...d,bk:d.bk.filter(s=>s!==slot),apts:d.apts.map(a=>a.id===aptId?{...a,status:"Cancelled by Doctor"}:a)};}));
+    setToast({msg:"Appointment cancelled. Waiting list notified.",type:"ok"});
+  };
+  const saveProfile=()=>{setDocs(ds=>ds.map(d=>d.id===doc.id?{...d,...pe,fees:+pe.fees}:d));setProfOpen(false);setToast({msg:"Profile updated!",type:"ok"});};
+  const openSlotEdit=()=>{setTmpSlots([...doc.slots]);setSlotEdit(true);};
+  const togTmp=t=>setTmpSlots(s=>s.includes(t)?s.filter(x=>x!==t):sortTimes([...s,t]));
+  const saveSlots=()=>{setDocs(ds=>ds.map(d=>d.id===doc.id?{...d,slots:sortTimes(tmpSlots),bk:d.bk.filter(s=>tmpSlots.includes(s))}:d));setSlotEdit(false);setToast({msg:"Slots updated! "+tmpSlots.length+" active.",type:"ok"});};
+  const wlBySlot=doc.slots.reduce((acc,s)=>{acc[s]=(doc.waitlist||{})[s]||[];return acc;},{});
+  const totalWl=Object.values(wlBySlot).reduce((s,w)=>s+w.length,0);
+  const confirmedApts=(doc.apts||[]).filter(a=>a.status==="Confirmed");
+  const[sosLog,setSosLog]=useState(()=>LS.get("cl_sos_log_"+loginInfo.id,[]));
+  const navItems=[{k:"home",i:"🏠",l:"Dashboard"},{k:"apts",i:"📋",l:"Appts"},{k:"waitlist",i:"⏳",l:"Waitlist",badge:totalWl||null},{k:"chat",i:"💬",l:"Chat"},{k:"rx",i:"💊",l:"Rx"},{k:"health",i:"📊",l:"Health"},{k:"slots",i:"🗓️",l:"Slots"},{k:"sos",i:"🚨",l:"SOS Log"},{k:"ai",i:"🤖",l:"AI Assist"}];
+
+  return(
+    <div className="dash-wrap" style={{display:"flex",minHeight:"100vh",background:"#f0fdf9"}}>
+      {toast&&<Toast msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
+      {sosAlert&&<SOSAlert sos={sosAlert} onDismiss={()=>{if(sosAlert?.patEmail){const patKey=sosAlert.patEmail.toLowerCase().replace(/\./g,"_").replace(/@/g,"__at__");FB.clearSOS(patKey);}setSosAlert(null);}}/> }
+      {/* Doctor incoming call from patient — in-app VideoCallFrame */}
+      {incomingCall&&!drActiveCall&&<IncomingCallPopup
+        callerName={incomingCall.callerName||"Patient"}
+        roomName={incomingCall.roomName}
+        dailyUrl={incomingCall.dailyUrl||""}
+        callKey={incomingCall._key}
+        onAccept={()=>{
+          const url=incomingCall.dailyUrl||"";
+          if(incomingCall._key)FB.clearCallByKey(incomingCall._key);
+          setIncomingCall(null);
+          if(url)setDrActiveCall({url,callerName:incomingCall.callerName||"Patient"});
+        }}
+        onDecline={()=>{if(incomingCall._key)FB.clearCallByKey(incomingCall._key);setIncomingCall(null);}}
+      />}
+      {drActiveCall&&<VideoCallFrame
+        roomUrl={drActiveCall.url}
+        callerName={drActiveCall.callerName||"Patient"}
+        onEnd={()=>setDrActiveCall(null)}
+      />}
+
+      {/* DESKTOP SIDEBAR */}
+      <div className="side-nav" style={{width:220,background:"#fff",borderRight:"1px solid #e2e8f0",display:"flex",flexDirection:"column",padding:"18px 11px",flexShrink:0,position:"sticky",top:0,height:"100vh",overflow:"hidden"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20,padding:"0 5px"}}>
+          <div style={{width:26,height:26,borderRadius:8,background:"linear-gradient(135deg,#059669,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>+</div>
+          <span style={{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:900,background:"linear-gradient(135deg,#059669,#06b6d4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>CureLink</span>
+          <span className="tag tag-g" style={{fontSize:9,marginLeft:"auto",padding:"1px 6px"}}>DOCTOR</span>
+        </div>
+        <div style={{display:"flex",gap:9,alignItems:"center",padding:"10px 10px",background:"#f0fdf4",border:"1px solid #a7f3d0",borderRadius:10,marginBottom:doc.hospital?4:18}}>
+          <Av name={doc.name} sz={36} g={["#059669","#0891b2"]}/>
+          <div style={{flex:1,minWidth:0}}><div style={{fontWeight:700,color:"#1e1535",fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{doc.name}</div><div style={{fontSize:10,color:"#9ca3af",marginTop:1}}>{doc.spec}</div></div>
+        </div>
+        {doc.hospital&&<div style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:9,padding:"8px 10px",marginBottom:14,fontSize:11}}>
+          <div style={{fontWeight:700,color:"#0369a1"}}>🏥 {doc.hospital}</div>
+          {doc.hospitalAddress&&<div style={{color:"#6b7280",fontSize:10,marginTop:2,lineHeight:1.4}}>📍 {doc.hospitalAddress}</div>}
+        </div>}
+        <div style={{display:"flex",alignItems:"center",gap:9,padding:"8px 10px",background:doc.on?"#f0fdf4":"#fff1f2",border:"1px solid "+(doc.on?"#a7f3d0":"#fecdd3"),borderRadius:9,marginBottom:14,cursor:"pointer"}} onClick={toggle}>
+          <label className="toggle" style={{pointerEvents:"none"}}><input type="checkbox" checked={doc.on} readOnly/><span className="tsl"/></label>
+          <span style={{fontSize:12,fontWeight:600,color:doc.on?"#059669":"rgba(220,38,38,.35)",flex:1}}>{doc.on?"● Online":"○ Offline"}</span>
+        </div>
+        {navItems.map(n=>(
+          <div key={n.k} className={"nav"+(tab===n.k?" onG":"")} onClick={()=>setTab(n.k)}>
+            <span>{n.i}</span><span style={{flex:1}}>{n.l}</span>
+            {n.badge&&<span style={{background:"#059669",color:"#1e1535",borderRadius:"20px",padding:"1px 7px",fontSize:10,fontWeight:800}}>{n.badge}</span>}
+          </div>
+        ))}
+        <div style={{flex:1}}/>
+        <div style={{borderTop:"1px solid #ede9fe",paddingTop:9}}>
+          <div className="nav" onClick={()=>setProfOpen(true)}><span>👤</span><span>Profile</span></div>
+          <div className="nav" onClick={onLogout} style={{color:"#e11d48"}}><span>🚪</span><span>Logout</span></div>
+        </div>
+      </div>
+
+      {/* MAIN CONTENT */}
+      <div className="main-content" style={{flex:1,overflowY:"auto",padding:"20px 22px"}}>
+        <div className="top-header" style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+          <div>
+            <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(19px,5vw,25px)",color:"#1e1535",fontWeight:700}}>
+              {tab==="home"&&"My Dashboard"}
+              {tab==="apts"&&"Appointments"}
+              {tab==="waitlist"&&"Waiting Lists"}
+              {tab==="chat"&&"Chat with Patients"}
+              {tab==="rx"&&"Write Prescription"}
+              {tab==="health"&&"Patient Health Data"}
+              {tab==="slots"&&"My Time Slots"}
+              {tab==="sos"&&"🚨 SOS Emergency Log"}
+              {tab==="ai"&&"🤖 AI Medical Assistant"}
+            </h2>
+            <p style={{color:"#d1d5db",fontSize:11,marginTop:2}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+          </div>
+          {/* mobile toggle */}
+          <div style={{display:"flex",alignItems:"center",gap:9,background:doc.on?"#f0fdf4":"#fff1f2",border:"1px solid "+(doc.on?"#a7f3d0":"#fecdd3"),borderRadius:9,padding:"7px 12px",cursor:"pointer",flexShrink:0}} onClick={toggle}>
+            <label className="toggle" style={{pointerEvents:"none"}}><input type="checkbox" checked={doc.on} readOnly/><span className="tsl"/></label>
+            <span style={{fontSize:12,fontWeight:700,color:doc.on?"#059669":"rgba(220,38,38,.35)"}}>{doc.on?"Online":"Offline"}</span>
+          </div>
+        </div>
+
+        {tab==="home"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:16}}>
+            <div className="stats-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
+              {[{i:"📋",l:"Total Apts",v:(doc.apts||[]).length,c:"#6ee7b7"},{i:"✅",l:"Confirmed",v:confirmedApts.length,c:"#0e7490"},{i:"🕒",l:"My Slots",v:(doc.slots||[]).length,c:"#9ca3af"},{i:"⏳",l:"Waitlisted",v:totalWl,c:"rgba(217,119,6,.45)"}].map(s=>(
+                <div key={s.l} className="stat"><div style={{fontSize:20,marginBottom:4}}>{s.i}</div><div style={{fontSize:20,fontWeight:800,color:s.c}}>{s.v}</div><div style={{color:"#9ca3af",fontSize:10,marginTop:2}}>{s.l}</div></div>
+              ))}
+            </div>
+            <div style={{background:"#fff",border:"1px solid #a7f3d0",borderRadius:14,padding:16}}>
+              <div style={{height:2,background:"linear-gradient(90deg,#059669,#06b6d4,#10b981)",borderRadius:2,marginBottom:14,marginTop:-2,marginLeft:-16,marginRight:-16,width:"calc(100% + 32px)"}}/>
+              <div style={{display:"flex",gap:11,alignItems:"center",marginBottom:12,flexWrap:"wrap"}}>
+                <Av name={doc.name} sz={50} g={["#059669","#0891b2"]}/>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:800,color:"#1e1535",fontSize:16}}>{doc.name}</div>
+                  <span className="tag tag-g" style={{marginTop:3,display:"inline-block"}}>{doc.spec}</span>
+                  <div style={{fontSize:11,color:"#9ca3af",marginTop:4,display:"flex",gap:10,flexWrap:"wrap"}}><span>📍 {doc.city}, {doc.state}</span><span>💰 ₹{doc.fees}</span><span>📋 {doc.id}</span></div>
+                </div>
+              </div>
+              {doc.quote&&<p style={{fontSize:13,color:"#9ca3af",fontStyle:"italic",borderLeft:"3px solid rgba(16,185,129,.5)",paddingLeft:12,marginBottom:12}}>"{doc.quote}"</p>}
+              <button className="btn-g" onClick={()=>setProfOpen(true)} style={{fontSize:12,padding:"8px 16px"}}>Edit Profile</button>
+            </div>
+            <div style={{background:"#f0fdf4",border:"1px solid #a7f3d0",borderRadius:11,padding:"11px 14px",fontSize:12,color:"#9ca3af",fontStyle:"italic"}}>"{QUOTES[qi]}"</div>
+            {confirmedApts.length>0&&<div>
+              <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:"#1e1535",marginBottom:11}}>📋 Today's Appointments</h3>
+              {confirmedApts.slice(-3).reverse().map(a=>(
+                <div key={a.id} className="row">
+                  <div style={{display:"flex",gap:9,alignItems:"center"}}><Av name={a.pName||"P"} sz={36} g={["#059669","#0891b2"]}/>
+                    <div><div style={{fontWeight:700,color:"#1e1535",fontSize:13}}>{a.pName}</div><div style={{fontSize:11,color:"#9ca3af",marginTop:1}}>🕒 {a.slot} • +91 {a.pPhone}</div></div>
+                  </div>
+                  <button className="btn-red" onClick={()=>cancelPat(a.id,a.slot)}>Cancel</button>
+                </div>
+              ))}
+            </div>}
+          </div>
+        )}
+
+        {tab==="apts"&&(
+          <div>
+            {(doc.apts||[]).length===0?<div style={{textAlign:"center",padding:"60px 0",color:"#d1d5db"}}><div style={{fontSize:40}}>📋</div><div style={{marginTop:9}}>No appointments yet</div></div>
+            :[...(doc.apts||[])].reverse().map(a=>(
+              <div key={a.id} className="row" style={{padding:"13px 15px"}}>
+                <div style={{display:"flex",gap:10,alignItems:"center"}}><Av name={a.pName||"P"} sz={38} g={["#059669","#0891b2"]}/>
+                  <div><div style={{fontWeight:700,color:"#1e1535",fontSize:13}}>{a.pName}</div><div style={{fontSize:11,color:"#9ca3af",marginTop:1,display:"flex",gap:7,flexWrap:"wrap"}}><span>📅 {a.date}</span><span>🕒 {a.slot}</span><span>📱 +91 {a.pPhone}</span></div>{a.notes&&<div style={{marginTop:2,fontSize:10.5,color:"#d1d5db"}}>📋 {a.notes}</div>}</div>
+                </div>
+                <div style={{display:"flex",gap:7,alignItems:"center",flexWrap:"wrap"}}>
+                  <span className={"tag"+(a.status==="Confirmed"?" tag-g":" tag-r")} style={{fontSize:10}}>{a.status}</span>
+                  {a.status==="Confirmed"&&<button className="btn-red" onClick={()=>cancelPat(a.id,a.slot)}>Cancel</button>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab==="waitlist"&&(
+          <div>
+            {totalWl===0?<div style={{textAlign:"center",padding:"60px 0",color:"#d1d5db"}}><div style={{fontSize:40}}>⏳</div><div style={{marginTop:9}}>No patients on waitlist</div></div>
+            :Object.entries(wlBySlot).filter(([,wl])=>wl.length>0).map(([slot,wl])=>(
+              <div key={slot} style={{marginBottom:16,background:"#fff",border:"1px solid #a7f3d0",borderRadius:14,overflow:"hidden"}}>
+                <div style={{padding:"12px 15px",background:"#f0fdf4",borderBottom:"1px solid #d1fae5",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{fontWeight:700,color:"#1e1535",fontSize:13}}>🕒 {slot}</div>
+                  <span className="tag tag-g" style={{fontSize:10}}>{wl.length} waiting</span>
+                </div>
+                {wl.map((p,idx)=>(
+                  <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"11px 15px",borderBottom:idx<wl.length-1?"1px solid #f3f0ff":"none"}}>
+                    <div style={{width:26,height:26,borderRadius:"50%",background:idx===0?"linear-gradient(135deg,#059669,#0891b2)":"linear-gradient(135deg,#d97706,#b45309)",display:"flex",alignItems:"center",justifyContent:"center",color:"#1e1535",fontWeight:800,fontSize:11,flexShrink:0}}>#{idx+1}</div>
+                    <div style={{flex:1}}><div style={{fontWeight:600,color:"#1e1535",fontSize:12.5}}>{p.pName}</div><div style={{fontSize:11,color:"#9ca3af",marginTop:1}}>+91 {p.pPhone} • {p.email}</div></div>
+                    {idx===0&&<span className="tag tag-g" style={{fontSize:9}}>NEXT</span>}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab==="chat"&&<DocChat doc={doc}/>}
+        {tab==="rx"&&<DocRx doc={doc}/>}
+        {tab==="health"&&<DocHealth doc={doc}/>}
+        {tab==="sos"&&(
+          <div>
+            <div style={{background:"#fff1f2",border:"1.5px solid #fecdd3",borderRadius:13,padding:"13px 16px",marginBottom:18,display:"flex",gap:11,alignItems:"center"}}>
+              <div style={{fontSize:28}}>🚨</div>
+              <div><div style={{fontWeight:800,color:"#e11d48",fontSize:14}}>Emergency SOS Log</div><div style={{color:"#9ca3af",fontSize:12,marginTop:2}}>Real-time alerts received from patients. Last 50 entries shown.</div></div>
+              {sosLog.length>0&&<button onClick={()=>{setSosLog([]);LS.del("cl_sos_log_"+loginInfo.id);}} style={{marginLeft:"auto",background:"#fff1f2",border:"1px solid #fecdd3",borderRadius:8,padding:"6px 12px",color:"rgba(225,29,72,.7)",fontFamily:"inherit",fontWeight:600,fontSize:11,cursor:"pointer",flexShrink:0}}>Clear Log</button>}
+            </div>
+            {sosLog.length===0?<div style={{textAlign:"center",padding:"60px 0",color:"#d1d5db"}}><div style={{fontSize:44}}>🆘</div><div style={{marginTop:10,fontSize:13}}>No SOS alerts received yet</div><p style={{fontSize:11,marginTop:6,opacity:.6}}>When a patient sends SOS, it will appear here.</p></div>
+            :sosLog.map((s,i)=>(
+              <div key={i} className="row" style={{borderLeft:"4px solid #e11d48",padding:"13px 15px",alignItems:"flex-start"}}>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5}}>
+                    <span style={{fontSize:16}}>🚨</span>
+                    <div style={{fontWeight:800,color:"#1e1535",fontSize:13}}>{s.patName}</div>
+                    <span className="tag tag-r" style={{fontSize:9}}>EMERGENCY</span>
+                  </div>
+                  <div style={{fontSize:11.5,color:"#6b7280",marginBottom:2}}>📱 +91 {s.patPhone}</div>
+                  {s.patEmail&&<div style={{fontSize:11,color:"#6b7280",marginBottom:2}}>✉️ {s.patEmail}</div>}
+                  {s.patAddress&&<div style={{fontSize:11,color:"#6b7280",marginBottom:4}}>🏠 {s.patAddress}</div>}
+                  {s.mapsLink&&s.mapsLink!=="Location unavailable"&&<a href={s.mapsLink} target="_blank" style={{display:"inline-flex",alignItems:"center",gap:5,marginBottom:5,background:"#e0f7fe",color:"#0369a1",border:"1.5px solid #7dd3fc",borderRadius:8,padding:"5px 10px",fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:11,textDecoration:"none"}}>🗺️ Google Maps →</a>}
+                  <div style={{fontSize:10.5,color:"#d1d5db"}}>{s.receivedAt?new Date(s.receivedAt).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):""}</div>
+                </div>
+                <a href={"tel:+91"+s.patPhone} style={{background:"linear-gradient(135deg,#e11d48,#be123c)",color:"#fff",border:"none",borderRadius:9,padding:"8px 14px",fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:12,textDecoration:"none",display:"inline-flex",alignItems:"center",gap:5,flexShrink:0,marginTop:2}}>📞 Call</a>
+              </div>
+            ))}
+          </div>
+        )}
+        {tab==="ai"&&<div style={{background:"#fff",borderRadius:14,border:"1px solid #e2e8f0",overflow:"hidden"}}><DrAiAssist doc={doc}/></div>}
+        {tab==="slots"&&(
+          <div>
+            <div style={{display:"flex",gap:10,marginBottom:18,alignItems:"center",flexWrap:"wrap"}}>
+              <div style={{flex:1}}><p style={{color:"#9ca3af",fontSize:12.5}}>{doc.slots.length} active slots • {doc.bk.length} booked today</p></div>
+              <button className="btn-g" onClick={openSlotEdit} style={{padding:"9px 18px",fontSize:13}}>Edit Slots</button>
+            </div>
+            {[["🌅 MORNING",doc.slots.filter(s=>s.includes("AM"))],["🌤️ AFTERNOON & EVENING",doc.slots.filter(s=>s.includes("PM"))]].map(([hd,slots])=>(
+              slots.length>0&&<div key={hd} style={{marginBottom:14}}>
+                <div className="lbl" style={{marginBottom:8}}>{hd}</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+                  {slots.map(s=>{const bk=doc.bk.includes(s);return(<div key={s} style={{background:bk?"#fff1f2":"#f0fdf4",border:"1px solid "+(bk?"#fecdd3":"#6ee7b7"),borderRadius:8,padding:"7px 12px",fontSize:12.5,color:bk?"rgba(220,38,38,.35)":"#059669",fontWeight:700}}>{bk?"🔴":"🟢"} {s}</div>);})}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* MOBILE BOTTOM NAV */}
+      <div className="mob-nav">
+        {navItems.map(n=>(
+          <button key={n.k} className={"mob-nav-btn"+(tab===n.k?" actG":"")} onClick={()=>setTab(n.k)}>
+            {n.badge&&<span className="badge">{n.badge}</span>}
+            <span style={{fontSize:20}}>{n.i}</span>
+            <span>{n.l}</span>
+          </button>
+        ))}
+        <button className="mob-nav-btn" onClick={()=>setProfOpen(true)}>
+          <span style={{fontSize:20}}>👤</span><span>Profile</span>
+        </button>
+      </div>
+
+      {profOpen&&<div className="overlay" onClick={e=>e.target===e.currentTarget&&setProfOpen(false)}>
+        <div className="modal" style={{borderColor:"#d1fae5"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}><h3 style={{fontFamily:"'Playfair Display',serif",fontSize:19,color:"#1e1535"}}>Edit Profile</h3><button onClick={()=>setProfOpen(false)} style={{background:"none",border:"none",fontSize:19,cursor:"pointer",color:"#9ca3af",padding:4}}>✕</button></div>
+          <div style={{display:"flex",gap:11,alignItems:"center",marginBottom:16,padding:11,background:"#f0fdf4",borderRadius:11,border:"1px solid #a7f3d0"}}><Av name={doc.name} sz={44} g={["#059669","#0891b2"]}/><div><div style={{fontWeight:700,color:"#1e1535",fontSize:14}}>{doc.name}</div><span className="tag tag-g" style={{marginTop:3,display:"inline-block"}}>{doc.spec}</span><div style={{fontSize:10,color:"#9ca3af",marginTop:2}}>Reg: {doc.id}</div></div></div>
+          <div className="form-grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:11}}>
+            {[["Age","age","number"],["Fees (₹)","fees","number"]].map(([lb,k,t])=>(
+              <div key={k}><label className="lbl">{lb.toUpperCase()}</label><input className="inp" type={t} value={pe[k]} onChange={e=>setPe({...pe,[k]:e.target.value})} placeholder={"Enter "+lb}/></div>
+            ))}
+            <div><label className="lbl">CITY 📍</label><div className="inp" style={{background:"#f0fdf4",border:"1.5px solid #a7f3d0",color:"#166534",fontWeight:700,cursor:"default",display:"flex",alignItems:"center",gap:6}}><span>🔒</span> Phagwara</div></div>
+            <div><label className="lbl">STATE 📍</label><div className="inp" style={{background:"#f0fdf4",border:"1.5px solid #a7f3d0",color:"#166534",fontWeight:700,cursor:"default",display:"flex",alignItems:"center",gap:6}}><span>🔒</span> Punjab</div></div>
+            <div style={{gridColumn:"1/-1"}}><label className="lbl">🏥 HOSPITAL / CLINIC NAME</label><input className="inp" value={pe.hospital||""} onChange={e=>setPe({...pe,hospital:e.target.value})} placeholder="e.g. City Care Hospital"/></div>
+            <div style={{gridColumn:"1/-1"}}><label className="lbl">📍 HOSPITAL ADDRESS</label><input className="inp" value={pe.hospitalAddress||""} onChange={e=>setPe({...pe,hospitalAddress:e.target.value})} placeholder="e.g. Near Bus Stand, GT Road, Phagwara"/></div>
+            <div style={{gridColumn:"1/-1"}}><label className="lbl">PROFESSIONAL QUOTE</label><input className="inp" value={pe.quote} onChange={e=>setPe({...pe,quote:e.target.value})} placeholder="Share a thought with patients..."/></div>
+          </div>
+          <div style={{display:"flex",gap:9,marginTop:15}}>
+            <button className="btn-ghost" onClick={onLogout} style={{color:"rgba(220,38,38,.75)"}}>Logout 🚪</button>
+            <button className="btn-g" onClick={saveProfile} style={{flex:1,padding:12}}>Save Profile</button>
+          </div>
+        </div>
+      </div>}
+
+      {slotEdit&&<div className="overlay" onClick={e=>e.target===e.currentTarget&&setSlotEdit(false)}>
+        <div className="modal" style={{borderColor:"#d1fae5"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:13}}><div><h3 style={{fontFamily:"'Playfair Display',serif",fontSize:19,color:"#1e1535"}}>Edit Time Slots</h3><p style={{color:"#9ca3af",fontSize:12,marginTop:2}}>{tmpSlots.length} selected</p></div><button onClick={()=>setSlotEdit(false)} style={{background:"none",border:"none",fontSize:19,cursor:"pointer",color:"#9ca3af",padding:4}}>✕</button></div>
+          <div style={{display:"flex",gap:7,marginBottom:13}}>
+            <button className="btn-ghost" onClick={()=>setTmpSlots([])} style={{fontSize:10,padding:"5px 10px"}}>Clear all</button>
+            <button className="btn-ghost" onClick={()=>setTmpSlots([...ALL_TIMES])} style={{fontSize:10,padding:"5px 10px"}}>Select all</button>
+          </div>
+          {[["🌅 MORNING",ALL_TIMES.filter(t=>t.includes("AM"))],["🌤️ AFTERNOON & EVENING",ALL_TIMES.filter(t=>t.includes("PM"))]].map(([hd,slots])=>(
+            <div key={hd} style={{marginBottom:12}}>
+              <div className="lbl" style={{marginBottom:7}}>{hd}</div>
+              <div className="slot-grid" style={{display:"flex",flexWrap:"wrap",gap:6}}>{slots.map(t=><button key={t} className={"time-btn"+(tmpSlots.includes(t)?" picked":"")} onClick={()=>togTmp(t)}>{t}</button>)}</div>
+            </div>
+          ))}
+          {tmpSlots.length>0&&<div style={{background:"#f0fdf4",border:"1px solid #a7f3d0",borderRadius:9,padding:10,marginBottom:12}}><div className="lbl" style={{color:"#6ee7b7",marginBottom:5}}>ACTIVE SLOTS ({tmpSlots.length})</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{tmpSlots.map(s=><span key={s} className="tag tag-g" style={{fontSize:9.5}}>{s}</span>)}</div></div>}
+          <div style={{display:"flex",gap:8}}>
+            <button className="btn-ghost" onClick={()=>setSlotEdit(false)}>Cancel</button>
+            <button className="btn-g" onClick={saveSlots} style={{flex:1,padding:12,fontSize:13}}>Save Slots ({tmpSlots.length})</button>
+          </div>
+        </div>
+      </div>}
+    </div>
+  );
+}
+
+
+/* ══════════════════════════════════════════
+   💬 PATIENT CHAT
+   ══════════════════════════════════════════ */
+function useFBReady(){
+  const[ready,setReady]=useState(()=>!!(window._fb&&window._fb.ready));
+  useEffect(()=>{
+    if(window._fb&&window._fb.ready){setReady(true);return;}
+    const iv=setInterval(()=>{if(window._fb&&window._fb.ready){setReady(true);clearInterval(iv);}},250);
+    return()=>clearInterval(iv);
+  },[]);
+  return ready;
+}
+
+/* ══════════════════════════════════════════
+   💬 PATIENT CHAT — Works with any doctor (appointment not required)
+   ══════════════════════════════════════════ */
+function PatChat({user,docs}){
+  const aptDrs=useMemo(()=>[...new Map((user.apts||[]).filter(a=>a.status==="Confirmed").map(a=>[a.drId,{id:a.drId,name:a.drName,spec:a.spec,fromApt:true}])).values()],[user.apts]);
+  const onlineDrs=useMemo(()=>(docs||[]).filter(d=>d.on).map(d=>({id:d.id,name:d.name,spec:d.spec,fromApt:false})),[docs]);
+  const allDrs=useMemo(()=>{const aptIds=new Set(aptDrs.map(d=>d.id));return [...aptDrs,...onlineDrs.filter(d=>!aptIds.has(d.id))];},[aptDrs,onlineDrs]);
+
+  const[selDr,setSelDr]=useState(null);
+  const[msgs,setMsgs]=useState([]);
+  const[inp,setInp]=useState("");
+  const[search,setSearch]=useState("");
+  const[recording,setRecording]=useState(false);
+  const[recSec,setRecSec]=useState(0);
+  const[vcModal,setVcModal]=useState(false);
+  const[vcLoading,setVcLoading]=useState(false);
+  const[vcError,setVcError]=useState("");
+  const[activeCall,setActiveCall]=useState(null); // {url, name}
+  const fbReady=useFBReady();
+  const bot=useRef(null);
+  const mrRef=useRef(null);
+  const chunksRef=useRef([]);
+  const timerRef=useRef(null);
+  const patKey=useMemo(()=>user.email.toLowerCase().replace(/\./g,"_").replace(/@/g,"__at__"),[user.email]);
+
+  useEffect(()=>{if(allDrs.length&&!selDr)setSelDr(allDrs[0]);},[allDrs]);
+  useEffect(()=>{bot.current?.scrollIntoView({behavior:"smooth"});},[msgs]);
+  useEffect(()=>{
+    if(!selDr||!fbReady)return;
+    const unsub=FB.onMsgs(patKey,selDr.id,setMsgs);
+    return typeof unsub==="function"?unsub:()=>{};
+  },[selDr?.id,fbReady,patKey]);
+
+  const vcRoom=selDr?`CureLink-${selDr.id}-${patKey.slice(0,10)}`:"";
+
+  const send=()=>{
+    if(!inp.trim()||!selDr||!fbReady)return;
+    FB.saveMsg(patKey,selDr.id,{id:"m"+Date.now(),sender:"patient",senderName:user.name,text:inp.trim(),type:"text",ts:Date.now()},{email:user.email,name:user.name,phone:user.phone});
+    setInp("");
+  };
+
+  const startRec=async()=>{
+    if(!selDr||!fbReady)return;
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      const mr=new MediaRecorder(stream,{mimeType:MediaRecorder.isTypeSupported("audio/webm")?"audio/webm":"audio/ogg"});
+      chunksRef.current=[];
+      mr.ondataavailable=e=>{if(e.data.size>0)chunksRef.current.push(e.data);};
+      mr.onstop=()=>{
+        stream.getTracks().forEach(t=>t.stop());
+        const blob=new Blob(chunksRef.current,{type:mr.mimeType||"audio/webm"});
+        const reader=new FileReader();
+        reader.onloadend=()=>{
+          const b64=reader.result;
+          FB.saveMsg(patKey,selDr.id,{id:"m"+Date.now(),sender:"patient",senderName:user.name,text:"🎤 Voice message",type:"voice",audioData:b64,ts:Date.now()},{email:user.email,name:user.name,phone:user.phone});
+        };
+        reader.readAsDataURL(blob);
+        clearInterval(timerRef.current);setRecSec(0);setRecording(false);
+      };
+      mr.start(200);mrRef.current=mr;setRecording(true);setRecSec(0);
+      timerRef.current=setInterval(()=>setRecSec(s=>s+1),1000);
+    }catch(e){alert("Microphone access denied. Please allow mic access in browser settings.");}
+  };
+
+  const stopRec=()=>{if(mrRef.current&&mrRef.current.state!=="inactive")mrRef.current.stop();};
+
+  const filteredDrs=allDrs.filter(d=>d.name.toLowerCase().includes(search.toLowerCase())||d.spec.toLowerCase().includes(search.toLowerCase()));
+
+  if(!allDrs.length)return(
+    <div style={{textAlign:"center",padding:"60px 20px",color:"#9ca3af"}}>
+      <div style={{fontSize:48,marginBottom:12}}>💬</div>
+      <h3 style={{fontFamily:"'Playfair Display',serif",color:"#1e1535",marginBottom:8}}>No Doctors Available</h3>
+      <p style={{fontSize:13,lineHeight:1.7}}>No doctors are online right now. Please check back later!</p>
+    </div>
+  );
+
+  return(
+    <div style={{display:"flex",gap:14,height:"calc(100vh - 180px)",minHeight:400}}>
+      {/* Daily.co in-app video call frame */}
+      {activeCall&&<VideoCallFrame
+        roomUrl={activeCall.url}
+        callerName={selDr?.name||"Doctor"}
+        onEnd={()=>setActiveCall(null)}
+      />}
+
+      {/* Video call confirm modal */}
+      {vcModal&&<div className="overlay" onClick={e=>e.target===e.currentTarget&&!vcLoading&&setVcModal(false)}>
+        <div className="modal" style={{textAlign:"center",borderColor:"#bae6fd",maxWidth:400}}>
+          <div style={{fontSize:52,marginBottom:10}}>📹</div>
+          <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:"#1e1535",marginBottom:7}}>Video Consultation</h3>
+          <p style={{color:"#6b7280",fontSize:13,marginBottom:8,lineHeight:1.7}}>
+            Aap <strong style={{color:"#0891b2"}}>{selDr?.name}</strong> ke saath HD video call shuru karne wale hain.
+          </p>
+          <div style={{background:"#e0f7fe",border:"1px solid #bae6fd",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#0e7490",lineHeight:1.8}}>
+            🔒 <strong>Daily.co Secure Room</strong><br/>
+            HD video • Encrypted • No signup needed<br/>
+            Camera aur mic allow karo ✅
+          </div>
+          {vcError&&<div style={{background:"#fff1f2",border:"1px solid #fecdd3",borderRadius:9,padding:"9px 12px",marginBottom:12,color:"rgba(225,29,72,.8)",fontSize:12}}>⚠️ {vcError}</div>}
+          <div style={{display:"flex",gap:9}}>
+            <button className="btn-ghost" onClick={()=>{setVcModal(false);setVcError("");}} disabled={vcLoading} style={{flex:1}}>Cancel</button>
+            <button onClick={async()=>{
+              setVcLoading(true);setVcError("");
+              try{
+                const room=await createDailyRoom(selDr.id+"-"+patKey.slice(0,8));
+                FB.saveCall(selDr.id,patKey,"patient",user.name,room.name,room.url);
+                setVcModal(false);
+                setActiveCall(room);
+              }catch(e){setVcError("Room create nahi hua: "+e.message);}
+              setVcLoading(false);
+            }} disabled={vcLoading} style={{flex:2,background:"linear-gradient(135deg,#0891b2,#0e7490)",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:800,fontSize:14,cursor:"pointer",boxShadow:"0 4px 18px rgba(8,145,178,.4)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              {vcLoading?<><div style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin .65s linear infinite"}}/> Creating Room...</>:"📹 Start Video Call"}
+            </button>
+          </div>
+        </div>
+      </div>}
+
+      {/* Doctor list sidebar */}
+      <div style={{width:200,flexShrink:0,display:"flex",flexDirection:"column",gap:6,overflowY:"auto",borderRight:"1.5px solid #ede9fe",paddingRight:10}}>
+        <input className="inp" placeholder="🔍 Search..." value={search} onChange={e=>setSearch(e.target.value)} style={{fontSize:12,padding:"8px 11px",marginBottom:4}}/>
+        {filteredDrs.map(d=>(
+          <button key={d.id} onClick={()=>{setSelDr(d);setMsgs([]);}} style={{border:"1.5px solid "+(selDr?.id===d.id?"#7c3aed":"#ede9fe"),background:selDr?.id===d.id?"linear-gradient(135deg,#7c3aed,#4f46e5)":"#faf5ff",color:selDr?.id===d.id?"#fff":"#1e1535",borderRadius:10,padding:"9px 10px",fontSize:11.5,fontWeight:600,cursor:"pointer",fontFamily:"inherit",textAlign:"left",display:"flex",flexDirection:"column",gap:2}}>
+            <span style={{fontWeight:700,fontSize:12}}>{d.name}</span>
+            <span style={{opacity:.75,fontSize:10}}>{d.spec}</span>
+            {d.fromApt&&<span style={{fontSize:9,background:"rgba(255,255,255,.25)",borderRadius:4,padding:"1px 5px",marginTop:1,color:selDr?.id===d.id?"#e0e0ff":"#7c3aed",fontWeight:700}}>✅ Booked</span>}
+          </button>
+        ))}
+        {filteredDrs.length===0&&<div style={{textAlign:"center",color:"#d1d5db",fontSize:12,padding:"20px 0"}}>No doctors found</div>}
+      </div>
+
+      {/* Chat area */}
+      <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0}}>
+        {selDr&&<div style={{background:"#f3f0ff",border:"1px solid #ddd6fe",borderRadius:10,padding:"10px 13px",marginBottom:10,display:"flex",gap:9,alignItems:"center",flexShrink:0,flexWrap:"wrap"}}>
+          <Av name={selDr.name} sz={32}/>
+          <div><div style={{fontWeight:700,color:"#1e1535",fontSize:13}}>{selDr.name}</div><span className="tag tag-v" style={{fontSize:10,marginTop:3,display:"inline-block"}}>{selDr.spec}</span></div>
+          <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+            <button className="vc-btn" onClick={()=>setVcModal(true)}>📹 Video Call</button>
+            <div style={{display:"flex",alignItems:"center",gap:4}}>
+              <div style={{width:7,height:7,borderRadius:"50%",background:fbReady?"#10b981":"#f59e0b",animation:"pulse 2s infinite"}}/>
+              <span style={{fontSize:10,color:fbReady?"#10b981":"#f59e0b",fontWeight:700}}>{fbReady?"LIVE":"Connecting..."}</span>
+            </div>
+          </div>
+        </div>}
+
+        <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:8,padding:"4px 0"}}>
+          {!fbReady&&<div style={{textAlign:"center",padding:"20px",color:"#f59e0b",fontSize:12,fontWeight:600}}>🔄 Connecting to server...</div>}
+          {fbReady&&msgs.length===0&&<div style={{textAlign:"center",padding:"30px 0",color:"#d1d5db",fontSize:13}}>No messages yet. Say hello! 👋</div>}
+          {msgs.map(m=>(
+            <div key={m.id} style={{display:"flex",justifyContent:m.sender==="patient"?"flex-end":"flex-start"}}>
+              <div style={{maxWidth:"78%",padding:"10px 14px",borderRadius:m.sender==="patient"?"16px 16px 3px 16px":"16px 16px 16px 3px",background:m.sender==="patient"?"linear-gradient(135deg,#7c3aed,#a855f7)":"#f3f0ff",color:m.sender==="patient"?"#fff":"#1e1535",border:m.sender==="patient"?"none":"1.5px solid #ede9fe",fontSize:13.5,lineHeight:1.62,boxShadow:m.sender==="patient"?"0 4px 14px rgba(124,58,237,.3)":"none"}}>
+                {m.sender==="doctor"&&<span style={{display:"block",fontSize:9,color:"#7c3aed",fontWeight:800,marginBottom:4,letterSpacing:"1.2px"}}>👨‍⚕️ DOCTOR</span>}
+                {m.type==="voice"?<div className="voice-bubble"><span style={{fontSize:14}}>🎤</span><audio controls src={m.audioData} style={{height:28,flex:1,minWidth:100}}/></div>:m.text}
+                <div style={{fontSize:9.5,opacity:.65,marginTop:4,textAlign:m.sender==="patient"?"right":"left"}}>{new Date(m.ts).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}</div>
+              </div>
+            </div>
+          ))}
+          <div ref={bot}/>
+        </div>
+
+        {/* Recording indicator */}
+        {recording&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"#fff1f2",border:"1px solid #fecdd3",borderRadius:9,marginBottom:6,fontSize:12,color:"#be123c",fontWeight:600}}>
+          <div className="rec-wave"><span/><span/><span/><span/><span/></div>
+          Recording... {recSec}s
+          <span style={{fontSize:10,color:"#9ca3af",marginLeft:"auto"}}>Max 60s • Release to send</span>
+        </div>}
+
+        <div style={{display:"flex",gap:8,paddingTop:10,borderTop:"1.5px solid #ede9fe",marginTop:8,flexShrink:0,alignItems:"center"}}>
+          {/* Voice record button */}
+          <button
+            className={"rec-btn"+(recording?" recording":" idle")}
+            onMouseDown={startRec} onMouseUp={stopRec}
+            onTouchStart={e=>{e.preventDefault();startRec();}} onTouchEnd={e=>{e.preventDefault();stopRec();}}
+            disabled={!selDr||!fbReady}
+            title={recording?"Release to send":"Hold to record voice"}
+          >🎤</button>
+          <input className="inp" value={inp} onChange={e=>setInp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder={fbReady?"Message your doctor...":"Connecting..."} disabled={!fbReady||recording} style={{flex:1,fontSize:14}}/>
+          <button className="btn-v" onClick={send} disabled={!inp.trim()||!selDr||!fbReady||recording} style={{padding:"10px 16px",flexShrink:0}}>➤</button>
+        </div>
+        <div style={{textAlign:"center",fontSize:10,color:"#c4b5fd",marginTop:5}}>🎤 Hold mic button to record • 📹 Video call button to consult face-to-face</div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   💊 PATIENT PRESCRIPTIONS VIEW
+   ══════════════════════════════════════════ */
+function PatRx({user}){
+  const[rxs,setRxs]=useState([]);
+  const fbReady=useFBReady();
+  const patKey=useMemo(()=>user.email.toLowerCase().replace(/\./g,"_").replace(/@/g,"__at__"),[user.email]);
+  useEffect(()=>{
+    if(!fbReady)return;
+    const unsub=FB.onRxs(patKey,setRxs);
+    return typeof unsub==="function"?unsub:()=>{};
+  },[fbReady,patKey]);
+
+  if(!fbReady)return <div style={{textAlign:"center",padding:"40px",color:"#f59e0b",fontWeight:600,fontSize:13}}>🔄 Connecting to server...</div>;
+  if(!rxs.length)return(
+    <div style={{textAlign:"center",padding:"60px 20px",color:"#9ca3af"}}>
+      <div style={{fontSize:48,marginBottom:12}}>💊</div>
+      <h3 style={{fontFamily:"'Playfair Display',serif",color:"#1e1535",marginBottom:8}}>No Prescriptions Yet</h3>
+      <p style={{fontSize:13,lineHeight:1.7}}>Your doctor's prescriptions will appear here in real-time.</p>
+    </div>
+  );
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:12}}>
+      {[...rxs].reverse().map(rx=>(
+        <div key={rx.id} className="card" style={{borderLeft:"4px solid #7c3aed"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+            <div style={{fontWeight:800,color:"#1e1535",fontSize:15,fontFamily:"'Playfair Display',serif"}}>💊 {rx.medicine}</div>
+            <span style={{fontSize:10,color:"#9ca3af",flexShrink:0}}>{new Date(rx.ts).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</span>
+          </div>
+          {rx.drName&&<div style={{marginBottom:8}}><span className="tag tag-v" style={{fontSize:10}}>👨‍⚕️ {rx.drName}</span></div>}
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            <div style={{fontSize:12.5,color:"#6b7280"}}><strong style={{color:"#7c3aed"}}>Dosage:</strong> {rx.dosage}</div>
+            <div style={{fontSize:12.5,color:"#6b7280"}}><strong style={{color:"#7c3aed"}}>Duration:</strong> {rx.duration}</div>
+            {rx.notes&&<div style={{fontSize:12.5,color:"#6b7280",background:"#f3f0ff",borderRadius:8,padding:"8px 11px",border:"1px solid #ede9fe"}}><strong style={{color:"#7c3aed"}}>📋 Instructions:</strong> {rx.notes}</div>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   ❤️ PATIENT HEALTH LOG
+   ══════════════════════════════════════════ */
+function PatHealth({user}){
+  const[form,setForm]=useState({bp:"",sugar:"",weight:"",temp:"",notes:""});
+  const[entries,setEntries]=useState([]);
+  const[done,setDone]=useState(false);
+  const fbReady=useFBReady();
+  const patKey=useMemo(()=>user.email.toLowerCase().replace(/\./g,"_").replace(/@/g,"__at__"),[user.email]);
+  useEffect(()=>{
+    if(!fbReady)return;
+    const unsub=FB.onHealth(patKey,setEntries);
+    return typeof unsub==="function"?unsub:()=>{};
+  },[fbReady,patKey]);
+
+  const save=()=>{
+    if(!form.bp&&!form.sugar&&!form.weight&&!form.temp)return;
+    const entry={id:"h"+Date.now(),...form,ts:Date.now()};
+    FB.saveHealth(patKey,entry);
+    setForm({bp:"",sugar:"",weight:"",temp:"",notes:""});
+    setDone(true);setTimeout(()=>setDone(false),2400);
+  };
+  const last=entries.length?entries[entries.length-1]:null;
+  return(
+    <div>
+      <div className="card" style={{marginBottom:18}}>
+        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:"#1e1535",marginBottom:14}}>📊 Log Today's Health</h3>
+        {!fbReady&&<div style={{background:"#fef9c3",border:"1px solid #fde68a",borderRadius:9,padding:"9px 13px",marginBottom:12,color:"#92400e",fontSize:12}}>🔄 Connecting to server...</div>}
+        {done&&<div style={{background:"#f3f0ff",border:"1px solid #ddd6fe",borderRadius:10,padding:"10px 13px",marginBottom:12,color:"#6d28d9",fontWeight:600,fontSize:13}}>✅ Saved! Your doctor can see this now.</div>}
+        <div className="form-grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:11}}>
+          <div><label className="lbl">BLOOD PRESSURE 🫀</label><input className="inp" placeholder="e.g. 120/80" value={form.bp} onChange={e=>setForm({...form,bp:e.target.value})}/></div>
+          <div><label className="lbl">BLOOD SUGAR 🩸</label><input className="inp" placeholder="mg/dL e.g. 90" value={form.sugar} onChange={e=>setForm({...form,sugar:e.target.value})}/></div>
+          <div><label className="lbl">WEIGHT ⚖️</label><input className="inp" placeholder="kg e.g. 65" value={form.weight} onChange={e=>setForm({...form,weight:e.target.value})}/></div>
+          <div><label className="lbl">TEMPERATURE 🌡️</label><input className="inp" placeholder="°F e.g. 98.6" value={form.temp} onChange={e=>setForm({...form,temp:e.target.value})}/></div>
+          <div style={{gridColumn:"1/-1"}}><label className="lbl">HOW ARE YOU FEELING?</label><textarea className="inp" rows={2} placeholder="Any symptoms or notes for your doctor..." value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} style={{resize:"none"}}/></div>
+        </div>
+        <button className="btn-v" onClick={save} disabled={!fbReady||(!form.bp&&!form.sugar&&!form.weight&&!form.temp)} style={{width:"100%",padding:12,marginTop:12,fontSize:13.5}}>Save Health Data ❤️</button>
+      </div>
+      {last&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18}}>
+        {[{i:"🫀",l:"Blood Pressure",v:last.bp||"—",c:"#7c3aed"},{i:"🩸",l:"Blood Sugar",v:last.sugar||"—",c:"#be123c"},{i:"⚖️",l:"Weight",v:last.weight?last.weight+" kg":"—",c:"#065f46"},{i:"🌡️",l:"Temperature",v:last.temp?last.temp+"°F":"—",c:"#0e7490"}].map(s=>(
+          <div key={s.l} className="stat"><div style={{fontSize:22,marginBottom:3}}>{s.i}</div><div style={{fontSize:18,fontWeight:800,color:s.c}}>{s.v}</div><div style={{fontSize:10,color:"#9ca3af",marginTop:2}}>{s.l}</div></div>
+        ))}
+      </div>}
+      {entries.length>0&&<>
+        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:16,color:"#1e1535",marginBottom:10}}>Health Log History</h3>
+        {[...entries].reverse().map(e=>(
+          <div key={e.id} className="row" style={{flexDirection:"column",alignItems:"flex-start",gap:7}}>
+            <div style={{display:"flex",justifyContent:"space-between",width:"100%",alignItems:"center"}}>
+              <div style={{fontWeight:700,color:"#1e1535",fontSize:13}}>📅 {new Date(e.ts).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</div>
+              <span style={{fontSize:10,color:"#9ca3af"}}>{new Date(e.ts).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}</span>
+            </div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+              {e.bp&&<span className="tag tag-v" style={{fontSize:10}}>🫀 {e.bp}</span>}
+              {e.sugar&&<span className="tag tag-r" style={{fontSize:10}}>🩸 {e.sugar}</span>}
+              {e.weight&&<span className="tag tag-g" style={{fontSize:10}}>⚖️ {e.weight}kg</span>}
+              {e.temp&&<span className="tag tag-b" style={{fontSize:10}}>🌡️ {e.temp}°F</span>}
+            </div>
+            {e.notes&&<div style={{fontSize:12,color:"#9ca3af",fontStyle:"italic"}}>"{e.notes}"</div>}
+          </div>
+        ))}
+      </>}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   💬 DOCTOR CHAT
+   ══════════════════════════════════════════ */
+function DocChat({doc}){
+  const basePatients=useMemo(()=>[...new Map(
+    (doc.apts||[]).filter(a=>a.status==="Confirmed"&&a.pEmail)
+    .map(a=>[a.pEmail,{name:a.pName,phone:a.pPhone,email:a.pEmail}])
+  ).values()],[doc.apts]);
+  const[extraPatients,setExtraPatients]=useState([]);
+  const patients=useMemo(()=>[...new Map(
+    [...basePatients,...extraPatients.filter(p=>p?.email).map(p=>({name:p.name||p.email,phone:p.phone||"",email:p.email}))]
+    .map(p=>[p.email,p])
+  ).values()],[basePatients,extraPatients]);
+
+  const[selPat,setSelPat]=useState(null);
+  const[msgs,setMsgs]=useState([]);
+  const[inp,setInp]=useState("");
+  const[recording,setRecording]=useState(false);
+  const[recSec,setRecSec]=useState(0);
+  const[vcModal,setVcModal]=useState(false);
+  const[vcLoading,setVcLoading]=useState(false);
+  const[vcError,setVcError]=useState("");
+  const[activeCall,setActiveCall]=useState(null);
+  const fbReady=useFBReady();
+  const bot=useRef(null);
+  const mrRef=useRef(null);
+  const chunksRef=useRef([]);
+  const timerRef=useRef(null);
+
+  useEffect(()=>{
+    if(!fbReady)return;
+    const unsub=FB.onChatParticipants(doc.id,setExtraPatients);
+    return typeof unsub==="function"?unsub:()=>{};
+  },[doc.id,fbReady]);
+  useEffect(()=>{if(patients.length&&!selPat)setSelPat(patients[0]);},[patients]);
+  useEffect(()=>{bot.current?.scrollIntoView({behavior:"smooth"});},[msgs]);
+
+  const patKey=useMemo(()=>selPat?selPat.email.toLowerCase().replace(/\./g,"_").replace(/@/g,"__at__"):null,[selPat?.email]);
+  const vcRoom=patKey?`CureLink-${doc.id}-${patKey.slice(0,10)}`:"";
+
+  useEffect(()=>{
+    if(!patKey||!fbReady)return;
+    const unsub=FB.onMsgs(patKey,doc.id,setMsgs);
+    return typeof unsub==="function"?unsub:()=>{};
+  },[patKey,doc.id,fbReady]);
+
+  const send=()=>{
+    if(!inp.trim()||!patKey||!fbReady)return;
+    FB.saveMsg(patKey,doc.id,{id:"m"+Date.now(),sender:"doctor",senderName:doc.name,text:inp.trim(),type:"text",ts:Date.now()},selPat);
+    setInp("");
+  };
+
+  const startRec=async()=>{
+    if(!patKey||!fbReady)return;
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      const mr=new MediaRecorder(stream,{mimeType:MediaRecorder.isTypeSupported("audio/webm")?"audio/webm":"audio/ogg"});
+      chunksRef.current=[];
+      mr.ondataavailable=e=>{if(e.data.size>0)chunksRef.current.push(e.data);};
+      mr.onstop=()=>{
+        stream.getTracks().forEach(t=>t.stop());
+        const blob=new Blob(chunksRef.current,{type:mr.mimeType||"audio/webm"});
+        const reader=new FileReader();
+        reader.onloadend=()=>{
+          FB.saveMsg(patKey,doc.id,{id:"m"+Date.now(),sender:"doctor",senderName:doc.name,text:"🎤 Voice message",type:"voice",audioData:reader.result,ts:Date.now()},selPat);
+        };
+        reader.readAsDataURL(blob);
+        clearInterval(timerRef.current);setRecSec(0);setRecording(false);
+      };
+      mr.start(200);mrRef.current=mr;setRecording(true);setRecSec(0);
+      timerRef.current=setInterval(()=>setRecSec(s=>s+1),1000);
+    }catch(e){alert("Microphone access denied. Please allow mic in browser settings.");}
+  };
+  const stopRec=()=>{if(mrRef.current&&mrRef.current.state!=="inactive")mrRef.current.stop();};
+
+  if(!patients.length)return(
+    <div style={{textAlign:"center",padding:"60px 20px",color:"#9ca3af"}}>
+      <div style={{fontSize:48,marginBottom:12}}>💬</div>
+      <h3 style={{fontFamily:"'Playfair Display',serif",color:"#1e1535",marginBottom:8}}>No Patient Conversations</h3>
+      <p style={{fontSize:13,lineHeight:1.7}}>Patients with appointments ya jo aapko message bhejenge, yahan appear honge.</p>
+    </div>
+  );
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 180px)",minHeight:400}}>
+      {/* Daily.co in-app video call frame */}
+      {activeCall&&<VideoCallFrame
+        roomUrl={activeCall.url}
+        callerName={selPat?.name||"Patient"}
+        onEnd={()=>setActiveCall(null)}
+      />}
+
+      {/* Video call modal */}
+      {vcModal&&<div className="overlay" onClick={e=>e.target===e.currentTarget&&!vcLoading&&setVcModal(false)}>
+        <div className="modal" style={{textAlign:"center",borderColor:"#a7f3d0",maxWidth:400}}>
+          <div style={{fontSize:52,marginBottom:10}}>📹</div>
+          <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:"#1e1535",marginBottom:7}}>Start Video Consultation</h3>
+          <p style={{color:"#6b7280",fontSize:13,marginBottom:8,lineHeight:1.7}}>
+            <strong style={{color:"#059669"}}>{selPat?.name}</strong> ke saath HD video call shuru karein.
+          </p>
+          <div style={{background:"#f0fdf4",border:"1px solid #a7f3d0",borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:12,color:"#065f46",lineHeight:1.8}}>
+            🔒 <strong>Daily.co Secure Room</strong><br/>
+            HD video • End-to-end encrypted<br/>
+            Patient ko notification milegi ✅
+          </div>
+          {vcError&&<div style={{background:"#fff1f2",border:"1px solid #fecdd3",borderRadius:9,padding:"9px 12px",marginBottom:12,color:"rgba(225,29,72,.8)",fontSize:12}}>⚠️ {vcError}</div>}
+          <div style={{display:"flex",gap:9}}>
+            <button className="btn-ghost" onClick={()=>{setVcModal(false);setVcError("");}} disabled={vcLoading} style={{flex:1}}>Cancel</button>
+            <button onClick={async()=>{
+              setVcLoading(true);setVcError("");
+              try{
+                const room=await createDailyRoom(doc.id+"-"+patKey.slice(0,8));
+                FB.saveCall(doc.id,patKey,"doctor",doc.name,room.name,room.url);
+                setVcModal(false);
+                setActiveCall(room);
+              }catch(e){setVcError("Room create nahi hua: "+e.message);}
+              setVcLoading(false);
+            }} disabled={vcLoading} style={{flex:2,background:"linear-gradient(135deg,#059669,#0891b2)",color:"#fff",border:"none",borderRadius:12,padding:"12px",fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:800,fontSize:14,cursor:"pointer",boxShadow:"0 4px 18px rgba(5,150,105,.4)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              {vcLoading?<><div style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin .65s linear infinite"}}/> Creating Room...</>:"📹 Start Video Call"}
+            </button>
+          </div>
+        </div>
+      </div>}
+
+      {patients.length>1&&<div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap",overflowX:"auto",paddingBottom:4}}>
+        {patients.map(p=><button key={p.email} onClick={()=>{setSelPat(p);setMsgs([]);}} style={{border:"1.5px solid "+(selPat?.email===p.email?"#059669":"#a7f3d0"),background:selPat?.email===p.email?"linear-gradient(135deg,#059669,#0891b2)":"#f0fdf4",color:selPat?.email===p.email?"#fff":"#065f46",borderRadius:9,padding:"7px 13px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>{p.name}</button>)}
+      </div>}
+
+      {selPat&&<div style={{background:"#f0fdf4",border:"1px solid #a7f3d0",borderRadius:10,padding:"10px 13px",marginBottom:10,display:"flex",gap:9,alignItems:"center",flexWrap:"wrap"}}>
+        <Av name={selPat.name} sz={32} g={["#059669","#0891b2"]}/><div><div style={{fontWeight:700,color:"#1e1535",fontSize:13}}>{selPat.name}</div><div style={{color:"#9ca3af",fontSize:11}}>+91 {selPat.phone}</div></div>
+        <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+          <button className="vc-btn" onClick={()=>setVcModal(true)}>📹 Video Call</button>
+          <div style={{display:"flex",alignItems:"center",gap:4}}>
+            <div style={{width:7,height:7,borderRadius:"50%",background:fbReady?"#10b981":"#f59e0b",animation:"pulse 2s infinite"}}/>
+            <span style={{fontSize:10,color:fbReady?"#10b981":"#f59e0b",fontWeight:700}}>{fbReady?"LIVE":"Connecting..."}</span>
+          </div>
+        </div>
+      </div>}
+
+      <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:8,padding:"4px 0"}}>
+        {!fbReady&&<div style={{textAlign:"center",padding:"20px",color:"#f59e0b",fontSize:12,fontWeight:600}}>🔄 Connecting to server...</div>}
+        {fbReady&&msgs.length===0&&<div style={{textAlign:"center",padding:"30px 0",color:"#d1d5db",fontSize:13}}>No messages yet. Send a message! 👋</div>}
+        {msgs.map(m=>(
+          <div key={m.id} style={{display:"flex",justifyContent:m.sender==="doctor"?"flex-end":"flex-start"}}>
+            <div style={{maxWidth:"78%",padding:"10px 14px",borderRadius:m.sender==="doctor"?"16px 16px 3px 16px":"16px 16px 16px 3px",background:m.sender==="doctor"?"linear-gradient(135deg,#059669,#0891b2)":"#f3f0ff",color:m.sender==="doctor"?"#fff":"#1e1535",border:m.sender==="doctor"?"none":"1.5px solid #ede9fe",fontSize:13.5,lineHeight:1.62,boxShadow:m.sender==="doctor"?"0 4px 14px rgba(5,150,105,.3)":"none"}}>
+              {m.sender==="patient"&&<span style={{display:"block",fontSize:9,color:"#7c3aed",fontWeight:800,marginBottom:4,letterSpacing:"1.2px"}}>🧑 PATIENT</span>}
+              {m.type==="voice"?<div className="voice-bubble"><span style={{fontSize:14}}>🎤</span><audio controls src={m.audioData} style={{height:28,flex:1,minWidth:100}}/></div>:m.text}
+              <div style={{fontSize:9.5,opacity:.65,marginTop:4,textAlign:m.sender==="doctor"?"right":"left"}}>{new Date(m.ts).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}</div>
+            </div>
+          </div>
+        ))}
+        <div ref={bot}/>
+      </div>
+
+      {recording&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"#fff1f2",border:"1px solid #fecdd3",borderRadius:9,marginBottom:6,fontSize:12,color:"#be123c",fontWeight:600}}>
+        <div className="rec-wave"><span/><span/><span/><span/><span/></div>
+        Recording... {recSec}s
+        <span style={{fontSize:10,color:"#9ca3af",marginLeft:"auto"}}>Release to send</span>
+      </div>}
+
+      <div style={{display:"flex",gap:8,paddingTop:10,borderTop:"1.5px solid #a7f3d0",marginTop:8,alignItems:"center"}}>
+        <button
+          className={"rec-btn"+(recording?" recording":" idle")}
+          onMouseDown={startRec} onMouseUp={stopRec}
+          onTouchStart={e=>{e.preventDefault();startRec();}} onTouchEnd={e=>{e.preventDefault();stopRec();}}
+          disabled={!patKey||!fbReady}
+          title={recording?"Release to send":"Hold to record voice"}
+          style={{borderColor:"#a7f3d0",color:"#059669",background:"#f0fdf4"}}
+        >🎤</button>
+        <input className="inp" value={inp} onChange={e=>setInp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder={fbReady?"Message to patient...":"Connecting..."} disabled={!fbReady||recording} style={{flex:1,fontSize:14}}/>
+        <button className="btn-g" onClick={send} disabled={!inp.trim()||!patKey||!fbReady||recording} style={{padding:"10px 16px",flexShrink:0}}>➤</button>
+      </div>
+      <div style={{textAlign:"center",fontSize:10,color:"#6ee7b7",marginTop:5}}>🎤 Hold mic to record voice • 📹 Video Call button for consultation</div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   💊 DOCTOR PRESCRIPTIONS WRITE
+   ══════════════════════════════════════════ */
+function DocRx({doc}){
+  const basePatients=useMemo(()=>[...new Map(
+    (doc.apts||[]).filter(a=>a.status==="Confirmed"&&a.pEmail)
+    .map(a=>[a.pEmail,{name:a.pName,phone:a.pPhone,email:a.pEmail}])
+  ).values()],[doc.apts]);
+  const[extraPatients,setExtraPatients]=useState([]);
+  const patients=useMemo(()=>[...new Map(
+    [...basePatients,...extraPatients.filter(p=>p?.email).map(p=>({name:p.name||p.email,phone:p.phone||"",email:p.email}))]
+    .map(p=>[p.email,p])
+  ).values()],[basePatients,extraPatients]);
+
+  const[selPat,setSelPat]=useState(null);
+  const[form,setForm]=useState({medicine:"",dosage:"",duration:"",notes:""});
+  const[rxs,setRxs]=useState([]);
+  const[done,setDone]=useState(false);
+  const fbReady=useFBReady();
+
+  useEffect(()=>{
+    if(!fbReady)return;
+    const unsub=FB.onChatParticipants(doc.id,setExtraPatients);
+    return typeof unsub==="function"?unsub:()=>{};
+  },[doc.id,fbReady]);
+  useEffect(()=>{if(patients.length&&!selPat)setSelPat(patients[0]);},[patients]);
+
+  const patKey=useMemo(()=>selPat?selPat.email.toLowerCase().replace(/\./g,"_").replace(/@/g,"__at__"):null,[selPat?.email]);
+
+  useEffect(()=>{
+    if(!patKey||!fbReady)return;
+    const unsub=FB.onRxs(patKey,setRxs);
+    return typeof unsub==="function"?unsub:()=>{};
+  },[patKey,fbReady]);
+
+  const send=()=>{
+    if(!form.medicine.trim()||!form.dosage.trim()||!form.duration.trim()||!patKey)return;
+    const rx={id:"rx"+Date.now(),medicine:form.medicine.trim(),dosage:form.dosage.trim(),duration:form.duration.trim(),notes:form.notes.trim(),drName:doc.name,drId:doc.id,ts:Date.now()};
+    FB.saveChatParticipant(doc.id,selPat);
+    FB.saveRx(patKey,rx);
+    setForm({medicine:"",dosage:"",duration:"",notes:""});
+    setDone(true);setTimeout(()=>setDone(false),2500);
+  };
+
+  if(!patients.length)return(
+    <div style={{textAlign:"center",padding:"60px 20px",color:"#9ca3af"}}>
+      <div style={{fontSize:48,marginBottom:12}}>💊</div>
+      <h3 style={{fontFamily:"'Playfair Display',serif",color:"#1e1535",marginBottom:8}}>No Patients Yet</h3>
+      <p style={{fontSize:13,lineHeight:1.7}}>Patients with appointments ya active chats yahan dikhेंगे.</p>
+    </div>
+  );
+  return(
+    <div>
+      {patients.length>1&&<div style={{display:"flex",gap:7,marginBottom:14,flexWrap:"wrap"}}>
+        {patients.map(p=><button key={p.email} onClick={()=>{setSelPat(p);setRxs([]);}} style={{border:"1.5px solid "+(selPat?.email===p.email?"#059669":"#a7f3d0"),background:selPat?.email===p.email?"linear-gradient(135deg,#059669,#0891b2)":"#f0fdf4",color:selPat?.email===p.email?"#fff":"#065f46",borderRadius:9,padding:"7px 13px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{p.name}</button>)}
+      </div>}
+      {selPat&&<div className="card" style={{marginBottom:18}}>
+        <div style={{height:3,background:"linear-gradient(90deg,#059669,#06b6d4)",borderRadius:3,marginBottom:14,marginTop:-18,marginLeft:-18,marginRight:-18,width:"calc(100% + 36px)"}}/>
+        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:17,color:"#1e1535",marginBottom:4}}>Write Prescription</h3>
+        <p style={{color:"#9ca3af",fontSize:12,marginBottom:14}}>For: <strong style={{color:"#059669"}}>{selPat.name}</strong> (+91 {selPat.phone})</p>
+        {!fbReady&&<div style={{background:"#fef9c3",border:"1px solid #fde68a",borderRadius:9,padding:"9px 13px",marginBottom:12,color:"#92400e",fontSize:12}}>🔄 Connecting to server...</div>}
+        {done&&<div style={{background:"#f0fdf4",border:"1px solid #a7f3d0",borderRadius:10,padding:"10px 13px",marginBottom:12,color:"#059669",fontWeight:600,fontSize:13}}>✅ Prescription sent to patient!</div>}
+        <div className="form-grid-2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:11}}>
+          <div style={{gridColumn:"1/-1"}}><label className="lbl">MEDICINE NAME *</label><input className="inp" placeholder="e.g. Paracetamol 500mg" value={form.medicine} onChange={e=>setForm({...form,medicine:e.target.value})}/></div>
+          <div><label className="lbl">DOSAGE *</label><input className="inp" placeholder="e.g. 1 tab 3x/day" value={form.dosage} onChange={e=>setForm({...form,dosage:e.target.value})}/></div>
+          <div><label className="lbl">DURATION *</label><input className="inp" placeholder="e.g. 5 days" value={form.duration} onChange={e=>setForm({...form,duration:e.target.value})}/></div>
+          <div style={{gridColumn:"1/-1"}}><label className="lbl">SPECIAL INSTRUCTIONS</label><textarea className="inp" rows={2} placeholder="Take after food, avoid if pregnant..." value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} style={{resize:"none"}}/></div>
+        </div>
+        <button className="btn-g" onClick={send} disabled={!fbReady||!form.medicine.trim()||!form.dosage.trim()||!form.duration.trim()} style={{width:"100%",padding:12,marginTop:12,fontSize:13.5}}>Send Prescription to Patient 💊</button>
+      </div>}
+      {rxs.filter(r=>r.drId===doc.id).length>0&&<>
+        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:16,color:"#1e1535",marginBottom:10}}>Prescriptions Sent</h3>
+        {[...rxs].reverse().filter(r=>r.drId===doc.id).map(rx=>(
+          <div key={rx.id} className="row">
+            <div><div style={{fontWeight:700,color:"#1e1535",fontSize:13}}>💊 {rx.medicine}</div><div style={{fontSize:11,color:"#9ca3af",marginTop:1}}>{rx.dosage} · {rx.duration} · {new Date(rx.ts).toLocaleDateString("en-IN")}</div>{rx.notes&&<div style={{fontSize:11,color:"#d1d5db",marginTop:1,fontStyle:"italic"}}>{rx.notes}</div>}</div>
+            <span className="tag tag-g" style={{fontSize:10}}>Sent ✓</span>
+          </div>
+        ))}
+      </>}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   📊 DOCTOR HEALTH VIEW
+   ══════════════════════════════════════════ */
+function DocHealth({doc}){
+  const basePatients=useMemo(()=>[...new Map(
+    (doc.apts||[]).filter(a=>a.status==="Confirmed"&&a.pEmail)
+    .map(a=>[a.pEmail,{name:a.pName,phone:a.pPhone,email:a.pEmail}])
+  ).values()],[doc.apts]);
+  const[extraPatients,setExtraPatients]=useState([]);
+  const patients=useMemo(()=>[...new Map(
+    [...basePatients,...extraPatients.filter(p=>p?.email).map(p=>({name:p.name||p.email,phone:p.phone||"",email:p.email}))]
+    .map(p=>[p.email,p])
+  ).values()],[basePatients,extraPatients]);
+
+  const[selPat,setSelPat]=useState(null);
+  const[entries,setEntries]=useState([]);
+  const fbReady=useFBReady();
+
+  useEffect(()=>{
+    if(!fbReady)return;
+    const unsub=FB.onChatParticipants(doc.id,setExtraPatients);
+    return typeof unsub==="function"?unsub:()=>{};
+  },[doc.id,fbReady]);
+  useEffect(()=>{if(patients.length&&!selPat)setSelPat(patients[0]);},[patients]);
+
+  const patKey=useMemo(()=>selPat?selPat.email.toLowerCase().replace(/\./g,"_").replace(/@/g,"__at__"):null,[selPat?.email]);
+
+  useEffect(()=>{
+    if(!patKey||!fbReady)return;
+    const unsub=FB.onHealth(patKey,setEntries);
+    return typeof unsub==="function"?unsub:()=>{};
+  },[patKey,fbReady]);
+
+  if(!patients.length)return(
+    <div style={{textAlign:"center",padding:"60px 20px",color:"#9ca3af"}}>
+      <div style={{fontSize:48,marginBottom:12}}>📊</div>
+      <h3 style={{fontFamily:"'Playfair Display',serif",color:"#1e1535",marginBottom:8}}>No Patient Data</h3>
+      <p style={{fontSize:13,lineHeight:1.7}}>When patients log their health data, it will appear here in real-time.</p>
+    </div>
+  );
+  const last=entries.length?entries[entries.length-1]:null;
+  return(
+    <div>
+      {patients.length>1&&<div style={{display:"flex",gap:7,marginBottom:14,flexWrap:"wrap"}}>
+        {patients.map(p=><button key={p.email} onClick={()=>{setSelPat(p);setEntries([]);}} style={{border:"1.5px solid "+(selPat?.email===p.email?"#059669":"#a7f3d0"),background:selPat?.email===p.email?"linear-gradient(135deg,#059669,#0891b2)":"#f0fdf4",color:selPat?.email===p.email?"#fff":"#065f46",borderRadius:9,padding:"7px 13px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{p.name}</button>)}
+      </div>}
+      {selPat&&last&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18}}>
+        {[{i:"🫀",l:"Blood Pressure",v:last.bp||"—",c:"#7c3aed"},{i:"🩸",l:"Blood Sugar",v:last.sugar||"—",c:"#be123c"},{i:"⚖️",l:"Weight",v:last.weight?last.weight+" kg":"—",c:"#065f46"},{i:"🌡️",l:"Temperature",v:last.temp?last.temp+"°F":"—",c:"#0e7490"}].map(s=>(
+          <div key={s.l} className="stat"><div style={{fontSize:22,marginBottom:3}}>{s.i}</div><div style={{fontSize:18,fontWeight:800,color:s.c}}>{s.v}</div><div style={{fontSize:10,color:"#9ca3af",marginTop:2}}>{s.l}</div></div>
+        ))}
+      </div>}
+      {selPat&&!entries.length&&<div style={{textAlign:"center",padding:"40px 0",color:"#9ca3af",fontSize:13}}>No health data logged by {selPat.name} yet.</div>}
+      {entries.length>0&&<>
+        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:16,color:"#1e1535",marginBottom:10}}>Health Log History</h3>
+        {[...entries].reverse().map(e=>(
+          <div key={e.id} className="row" style={{flexDirection:"column",alignItems:"flex-start",gap:7}}>
+            <div style={{display:"flex",justifyContent:"space-between",width:"100%",alignItems:"center"}}>
+              <div style={{fontWeight:700,color:"#1e1535",fontSize:13}}>📅 {new Date(e.ts).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</div>
+              <span style={{fontSize:10,color:"#9ca3af"}}>{new Date(e.ts).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}</span>
+            </div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+              {e.bp&&<span className="tag tag-v" style={{fontSize:10}}>🫀 {e.bp}</span>}
+              {e.sugar&&<span className="tag tag-r" style={{fontSize:10}}>🩸 {e.sugar}</span>}
+              {e.weight&&<span className="tag tag-g" style={{fontSize:10}}>⚖️ {e.weight}kg</span>}
+              {e.temp&&<span className="tag tag-b" style={{fontSize:10}}>🌡️ {e.temp}°F</span>}
+            </div>
+            {e.notes&&<div style={{fontSize:12,color:"#9ca3af",fontStyle:"italic"}}>"{e.notes}"</div>}
+          </div>
+        ))}
+      </>}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   🤖 DOCTOR AI ASSISTANT (Claude API)
+   ══════════════════════════════════════════ */
+function DrAiAssist({doc}){
+  const[msgs,setMsgs]=useState([{r:"ai",t:`Namaste ${doc.name}! 👨‍⚕️\n\nMain aapka AI medical assistant hoon. Mujhse poochein:\n• Patient symptoms ka differential diagnosis\n• Drug interactions aur dosage guidance\n• Treatment protocols aur guidelines\n• Medical research queries\n• Clinical decision support\n\nMain evidence-based guidance provide karta hoon.`}]);
+  const[inp,setInp]=useState("");const[load,setLoad]=useState(false);
+  const bot=useRef(null);
+  useEffect(()=>{bot.current?.scrollIntoView({behavior:"smooth"});},[msgs,load]);
+
+  const send=async()=>{
+    if(!inp.trim()||load)return;
+    const um=inp.trim();setInp("");setLoad(true);
+    setMsgs(m=>[...m,{r:"user",t:um}]);
+    try{
+      const history=msgs.slice(1).map(m=>({role:m.r==="ai"?"assistant":"user",content:m.t}));
+      const res=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:1200,
+          system:`You are a professional medical AI assistant supporting Dr. ${doc.name} (${doc.spec}) at CureLink, Phagwara, Punjab, India. Provide concise, evidence-based clinical guidance. Help with differential diagnosis, drug dosages, treatment protocols, drug interactions, and medical literature. Use bullet points for lists. Always recommend consulting specialists for complex cases. Be professional, precise, and use medical terminology appropriately while also explaining in simple terms when needed.`,
+          messages:[...history,{role:"user",content:um}]
+        })
+      });
+      if(!res.ok){const e=await res.json().catch(()=>({}));setMsgs(m=>[...m,{r:"ai",t:"⚠️ Error "+(e?.error?.message||res.status)+". Please try again."}]);}
+      else{const d=await res.json();setMsgs(m=>[...m,{r:"ai",t:d.content?.[0]?.text||"No response. Try again."}]);}
+    }catch(e){setMsgs(m=>[...m,{r:"ai",t:"⚠️ Network error: "+e.message}]);}
+    setLoad(false);
+  };
+
+  const suggestions=["Differential diagnosis: fever + rash + joint pain","Drug interaction: Metformin + Aspirin","Hypertension treatment protocol India","Child dosage for Amoxicillin 10kg"];
+  return(
+    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 140px)",minHeight:460}}>
+      <div style={{background:"linear-gradient(135deg,#065f46,#0891b2)",borderRadius:"14px 14px 0 0",padding:"12px 16px",display:"flex",alignItems:"center",gap:11,flexShrink:0}}>
+        <div style={{fontSize:24,animation:"float 3s ease-in-out infinite"}}>🤖</div>
+        <div style={{flex:1}}>
+          <div style={{color:"#fff",fontWeight:800,fontSize:14,fontFamily:"'Playfair Display',serif"}}>Clinical AI Assistant</div>
+          <div style={{color:"#6ee7b7",fontSize:11}}>Powered by Claude AI • For {doc.name}</div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:5}}>
+          <div style={{width:7,height:7,borderRadius:"50%",background:"#10b981"}}/>
+          <span style={{fontSize:10,color:"#10b981",fontWeight:700}}>LIVE</span>
+        </div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:13,display:"flex",flexDirection:"column",gap:10,background:"#f0fdf4"}}>
+        {msgs.map((m,i)=>(
+          <div key={i} style={{display:"flex",justifyContent:m.r==="user"?"flex-end":"flex-start"}}>
+            <div style={{maxWidth:"88%",padding:"10px 14px",borderRadius:m.r==="user"?"16px 16px 3px 16px":"16px 16px 16px 3px",background:m.r==="user"?"linear-gradient(135deg,#059669,#0891b2)":"#fff",color:m.r==="user"?"#fff":"#1e1535",border:m.r==="user"?"none":"1.5px solid #a7f3d0",fontSize:13.5,lineHeight:1.68,whiteSpace:"pre-wrap",wordBreak:"break-word",boxShadow:m.r==="user"?"0 4px 14px rgba(5,150,105,.3)":"0 2px 8px rgba(5,150,105,.08)"}}>
+              {m.r==="ai"&&<span style={{display:"block",fontSize:9,color:"#059669",fontWeight:800,marginBottom:4,letterSpacing:"1.2px"}}>🤖 CLINICAL AI</span>}
+              {m.t}
+            </div>
+          </div>
+        ))}
+        {load&&<div style={{display:"flex"}}><div style={{background:"#fff",border:"1.5px solid #a7f3d0",borderRadius:"16px 16px 16px 3px",padding:"10px 14px",display:"flex",gap:5,alignItems:"center"}}>{[0,.18,.36].map(d=><div key={d} style={{width:7,height:7,borderRadius:"50%",background:"#059669",animation:"pulse 1s "+d+"s infinite"}}/>)}</div></div>}
+        {msgs.length===1&&!load&&<div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:6}}>
+          {suggestions.map(s=><button key={s} onClick={()=>setInp(s)} style={{background:"#fff",border:"1px solid #a7f3d0",color:"#065f46",borderRadius:20,padding:"6px 12px",fontSize:11.5,fontFamily:"'Plus Jakarta Sans',sans-serif",cursor:"pointer",fontWeight:600}}>{s}</button>)}
+        </div>}
+        <div ref={bot}/>
+      </div>
+      <div style={{padding:"10px 12px",background:"#fff",borderRadius:"0 0 14px 14px",borderTop:"1px solid #a7f3d0",display:"flex",gap:8,flexShrink:0}}>
+        <input className="inp" placeholder="Ask clinical question, drug info, diagnosis help..." value={inp} onChange={e=>setInp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&send()} style={{flex:1,fontSize:14,borderColor:"#a7f3d0"}}/>
+        <button className="btn-g" onClick={send} disabled={load} style={{padding:"10px 14px",flexShrink:0}}>{load?<Spin/>:"➤"}</button>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   🚨 SOS BUTTON — Patient side (with Firebase fallback)
+   ══════════════════════════════════════════ */
+function SOSButton({user}){
+  const[step,setStep]=useState("idle"); // idle | locating | confirm | sending | sent | error
+  const[loc,setLoc]=useState(null);
+  const[errMsg,setErrMsg]=useState("");
+  const patKey=user.email.toLowerCase().replace(/\./g,"_").replace(/@/g,"__at__");
+
+  const triggerSOS=()=>{
+    if(step==="sending"||step==="sent")return;
+    setStep("locating");setErrMsg("");
+    if(!navigator.geolocation){setLoc(null);setStep("confirm");return;}
+    navigator.geolocation.getCurrentPosition(
+      pos=>{
+        setLoc({lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:Math.round(pos.coords.accuracy)});
+        setStep("confirm");
+      },
+      err=>{
+        // Location denied — still send SOS without location
+        setLoc(null);setStep("confirm");
+      },
+      {timeout:8000,maximumAge:0}
+    );
+  };
+
+  const confirmSend=()=>{
+    setStep("sending");
+    const mapsLink=loc?`https://www.google.com/maps?q=${loc.lat},${loc.lng}`:"Location unavailable";
+    const ts=Date.now();
+    const sos={
+      patName:user.name,
+      patPhone:user.phone,
+      patEmail:user.email,
+      patAddress:user.address||"",
+      lat:loc?.lat||null,
+      lng:loc?.lng||null,
+      mapsLink,
+      accuracy:loc?.accuracy||null,
+      message:`🚨 EMERGENCY SOS from ${user.name} (${user.phone}). ${loc?`Location: ${mapsLink}`:"Location unavailable. Please call immediately!"}`,
+      ts,
+      _ts:ts
+    };
+    // Save to localStorage backup
+    LS.set("cl_sos_latest",sos);
+    // Use FB.saveSOS which uses REST API — works without ESM
+    FB.saveSOS(patKey,sos);
+    setTimeout(()=>setStep("sent"),1200);
+    setTimeout(()=>setStep("idle"),9000);
+  };
+
+  if(step==="confirm")return(
+    <div className="overlay" onClick={e=>e.target===e.currentTarget&&setStep("idle")}>
+      <div className="modal" style={{textAlign:"center",borderColor:"#fecdd3"}}>
+        <div style={{fontSize:52,marginBottom:12,animation:"pulse 1s infinite"}}>🚨</div>
+        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:"#e11d48",marginBottom:8}}>Send Emergency SOS?</h3>
+        <p style={{color:"#9ca3af",fontSize:13,marginBottom:8,lineHeight:1.7}}>This will alert <strong>ALL available doctors</strong> with your name, phone, and location.</p>
+        {loc?<div style={{background:"#f0fdf4",border:"1px solid #a7f3d0",borderRadius:10,padding:"10px 13px",marginBottom:16,fontSize:12.5}}>
+          📍 Location captured (±{loc.accuracy}m accuracy)<br/>
+          <a href={`https://www.google.com/maps?q=${loc.lat},${loc.lng}`} target="_blank" style={{color:"#059669",fontWeight:700}}>Preview on Maps →</a>
+        </div>:<div style={{background:"#fff1f2",border:"1px solid #fecdd3",borderRadius:10,padding:"10px 13px",marginBottom:16,color:"rgba(225,29,72,.7)",fontSize:12}}>⚠️ Location unavailable — SOS will still be sent with your address.</div>}
+        {user.address&&<div style={{background:"#f3f0ff",border:"1px solid #ddd6fe",borderRadius:10,padding:"9px 12px",marginBottom:16,fontSize:12,color:"#6d28d9"}}>🏠 Address: {user.address}</div>}
+        <div style={{display:"flex",gap:9}}>
+          <button className="btn-ghost" onClick={()=>setStep("idle")} style={{flex:1}}>Cancel</button>
+          <button onClick={confirmSend} style={{flex:2,padding:"13px",border:"none",borderRadius:12,background:"linear-gradient(135deg,#e11d48,#be123c)",color:"#fff",fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:800,fontSize:15,cursor:"pointer",boxShadow:"0 4px 18px rgba(225,29,72,.45)"}}>🚨 Send SOS Now</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if(step==="sending")return(
+    <div className="overlay">
+      <div className="modal" style={{textAlign:"center",borderColor:"#fecdd3"}}>
+        <div style={{fontSize:52,marginBottom:12,animation:"spin 1s linear infinite"}}>⏳</div>
+        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:"#e11d48",marginBottom:8}}>Sending SOS...</h3>
+        <p style={{color:"#9ca3af",fontSize:13}}>Please wait while we alert all doctors.</p>
+      </div>
+    </div>
+  );
+
+  if(step==="sent")return(
+    <div className="overlay">
+      <div className="modal" style={{textAlign:"center",borderColor:"#a7f3d0"}}>
+        <div style={{fontSize:52,marginBottom:12}}>✅</div>
+        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:"#059669",marginBottom:8}}>SOS Sent!</h3>
+        <p style={{color:"#9ca3af",fontSize:13,lineHeight:1.7}}>Emergency alert sent to all available doctors. Stay calm — help is on the way! 🏥</p>
+        <div style={{background:"#f0fdf4",border:"1px solid #a7f3d0",borderRadius:10,padding:"10px 13px",marginTop:12,fontSize:12,color:"#065f46"}}>
+          <strong>While you wait:</strong><br/>Call 112 for ambulance or ask someone nearby for help.
+        </div>
+        <button className="btn-g" onClick={()=>setStep("idle")} style={{marginTop:16,width:"100%",padding:12}}>Close</button>
+      </div>
+    </div>
+  );
+
+  return(
+    <div style={{position:"fixed",bottom:80,right:16,zIndex:400,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+      <div style={{background:"rgba(225,29,72,.9)",color:"#fff",borderRadius:6,padding:"2px 7px",fontSize:9,fontWeight:800,letterSpacing:"0.5px",boxShadow:"0 2px 8px rgba(225,29,72,.4)"}}>SOS</div>
+      <button onClick={triggerSOS} disabled={step==="locating"} style={{width:60,height:60,borderRadius:"50%",background:step==="locating"?"#f59e0b":"linear-gradient(135deg,#e11d48,#be123c)",border:"3px solid rgba(255,255,255,.9)",color:"#fff",fontSize:24,cursor:"pointer",boxShadow:"0 4px 22px rgba(225,29,72,.65)",display:"flex",alignItems:"center",justifyContent:"center",animation:step==="locating"?"spin 1s linear infinite":"glow 2s ease-in-out infinite",fontFamily:"inherit"}}>
+        {step==="locating"?"⏳":"🆘"}
+      </button>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   🚨 SOS ALERT — Doctor side popup
+   ══════════════════════════════════════════ */
+function SOSAlert({sos,onDismiss}){
+  const[sec,setSec]=useState(60);
+  const[flash,setFlash]=useState(true);
+  useEffect(()=>{
+    const t=setInterval(()=>setSec(s=>{if(s<=1){onDismiss();return 0;}return s-1;}),1000);
+    const f=setInterval(()=>setFlash(x=>!x),600);
+    // Vibrate if supported
+    if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]);
+    return()=>{clearInterval(t);clearInterval(f);};
+  },[]);
+  return(
+    <>
+      {/* Full screen red flash overlay */}
+      <div style={{position:"fixed",inset:0,background:flash?"rgba(225,29,72,0.15)":"transparent",zIndex:2999,pointerEvents:"none",transition:"background 0.3s"}}/>
+      <div className="notif" style={{borderColor:"#fca5a5",background:"#fff",zIndex:3000,animation:"slideIn .35s cubic-bezier(.22,1,.36,1)",border:"2.5px solid #e11d48",boxShadow:"0 8px 40px rgba(225,29,72,.4)"}}>
+        <div style={{height:3,background:"linear-gradient(90deg,#e11d48,#be123c)",borderRadius:3,marginBottom:12,marginTop:-18,marginLeft:-18,marginRight:-18,width:"calc(100% + 36px)",animation:"pulse 0.6s ease-in-out infinite"}}/>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:11}}>
+          <div style={{display:"flex",gap:10,alignItems:"center"}}>
+            <div style={{width:44,height:44,borderRadius:12,background:"linear-gradient(135deg,#e11d48,#be123c)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,animation:"pulse 0.6s infinite"}}>🚨</div>
+            <div><div style={{fontWeight:800,color:"#e11d48",fontSize:15}}>🆘 EMERGENCY SOS!</div><div style={{color:"#9ca3af",fontSize:11,marginTop:1}}>Patient needs immediate help</div></div>
+          </div>
+          <button onClick={onDismiss} style={{background:"none",border:"none",color:"#9ca3af",fontSize:18,cursor:"pointer",padding:4}}>✕</button>
+        </div>
+        <div style={{background:"#fff1f2",border:"1px solid #fecdd3",borderRadius:11,padding:"11px 13px",marginBottom:11}}>
+          <div style={{fontWeight:800,color:"#1e1535",fontSize:14,marginBottom:4}}>👤 {sos.patName}</div>
+          <div style={{color:"#6b7280",fontSize:12.5,marginBottom:2}}>📱 +91 {sos.patPhone}</div>
+          {sos.patEmail&&<div style={{color:"#6b7280",fontSize:12,marginBottom:2}}>✉️ {sos.patEmail}</div>}
+          {sos.patAddress&&<div style={{color:"#6b7280",fontSize:12,marginBottom:4}}>🏠 {sos.patAddress}</div>}
+          {sos.mapsLink&&sos.mapsLink!=="Location unavailable"&&<a href={sos.mapsLink} target="_blank" style={{display:"inline-flex",alignItems:"center",gap:5,marginTop:4,background:"#e0f7fe",color:"#0369a1",border:"1.5px solid #7dd3fc",borderRadius:8,padding:"6px 12px",fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:12,textDecoration:"none"}}>🗺️ Open in Google Maps →</a>}
+          {(!sos.mapsLink||sos.mapsLink==="Location unavailable")&&<div style={{marginTop:6,color:"rgba(225,29,72,.6)",fontSize:11.5}}>⚠️ GPS Location unavailable — use address above</div>}
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <a href={"tel:+91"+sos.patPhone} style={{flex:1,padding:"10px",border:"none",borderRadius:10,background:"linear-gradient(135deg,#e11d48,#be123c)",color:"#fff",fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:13,cursor:"pointer",textDecoration:"none",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>📞 Call Now</a>
+          <button onClick={onDismiss} style={{padding:"10px 14px",border:"1.5px solid #fecdd3",borderRadius:10,background:"#fff1f2",color:"rgba(225,29,72,.75)",fontFamily:"inherit",fontWeight:600,fontSize:12,cursor:"pointer"}}>Dismiss ({sec}s)</button>
+        </div>
+        <div style={{height:3,background:"#fce7f3",borderRadius:3,marginTop:10,overflow:"hidden"}}>
+          <div style={{height:"100%",background:"linear-gradient(90deg,#e11d48,#be123c)",width:((sec/60)*100)+"%",transition:"width 1s linear",borderRadius:3}}/>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ROOT APP */
+function App(){
+  const[docs,setDocsRaw]=useState(()=>LS.get("cl_docs",[]));
+  /* 🔥 Firebase real-time sync — waits for ESM module to load */
+  useEffect(()=>{
+    let unsub=null;
+    const mergeDocs=fbDocs=>{
+      const merged=DUMMY_DOCS.map(dd=>{const ex=fbDocs.find(f=>f.id===dd.id);return ex?ex:dd;});
+      const realDrs=fbDocs.filter(f=>!DUMMY_DOCS.find(dd=>dd.id===f.id));
+      return[...merged,...realDrs];
+    };
+    const connect=()=>{
+      if(!FB.ok)return;
+      FB.loadDocs().then(fbDocs=>{
+        if(fbDocs&&fbDocs.length>0){
+          const all=mergeDocs(fbDocs);
+          LS.set("cl_docs",all);setDocsRaw(all);
+        }else{
+          const local=LS.get("cl_docs",[]);
+          if(local.length>0)FB.saveDocs(local);
+        }
+      });
+      unsub=FB.onDocs(fbDocs=>{
+        const all=mergeDocs(fbDocs);
+        LS.set("cl_docs",all);setDocsRaw(all);
+      });
+    };
+    // ESM module loads async — poll until ready (max 5s)
+    let attempts=0;
+    const poll=setInterval(()=>{
+      attempts++;
+      if(FB.ok){clearInterval(poll);connect();}
+      else if(attempts>50){clearInterval(poll);console.warn("Firebase unavailable — using localStorage");}
+    },100);
+    return()=>{clearInterval(poll);if(unsub)unsub();};
+  },[]);
+  const setDocs=upd=>{setDocsRaw(prev=>{const next=typeof upd==="function"?upd(prev):upd;LS.set("cl_docs",next);FB.saveDocs(next);return next;});};
+  const[screen,setScreen]=useState("landing");
+  const[curUser,setCurUserRaw]=useState(null);
+  const setUser=upd=>{setCurUserRaw(prev=>{const next=typeof upd==="function"?upd(prev):upd;if(next){LS.set("cl_cur_user",next);const all=LS.get("cl_all_users",{});all[next.email.toLowerCase()]=next;LS.set("cl_all_users",all);FB.saveUser(next);}return next;});};
+  const[curDrId,setCurDrId]=useState(null);const[tempDr,setTempDr]=useState(null);
+  const curDoc=docs.find(d=>d.id===curDrId)||null;
+  const[toast,setToast]=useState(null);
+
+  const handleUserLogin=f=>{
+    const all=LS.get("cl_all_users",{});const key=f.email.toLowerCase();
+    if(all[key]&&all[key].phone===f.phone){
+      const saved=all[key];setCurUserRaw(saved);LS.set("cl_cur_user",saved);
+      setToast({msg:"Welcome back, "+saved.name.split(" ")[0]+"! Account restored.",type:"ok"});
+    }else{
+      const nu={...f,age:"",city:"",state:"",address:f.address||"",apts:[]};
+      all[key]=nu;LS.set("cl_all_users",all);LS.set("cl_cur_user",nu);setCurUserRaw(nu);
+      setToast({msg:"Welcome to CureLink, "+nu.name.split(" ")[0]+"! 🎉",type:"new"});
+    }
+    setScreen("userDash");
+  };
+
+  const handleDrLogin=info=>{
+    const existing=docs.find(d=>d.id===info.regId);
+    if(existing){
+      /* Save email+phone+hospital to the doctor record if not already set */
+      if(!existing.email||!existing.phone||!existing.hospital){
+        setDocs(ds=>ds.map(d=>d.id===info.regId?{...d,email:info.email,phone:info.phone,hospital:info.hospital||d.hospital||"",hospitalAddress:info.hospitalAddress||d.hospitalAddress||""}:d));
+      }
+      setCurDrId(existing.id);
+      setToast({msg:"Welcome back, "+existing.name+"! 👨‍⚕️",type:"ok"});
+      setScreen("doctorDash");
+    }else{
+      setTempDr(info);setScreen("doctorSetup");
+    }
+  };
+
+  const handleSetupComplete=fullDoc=>{
+    const doc={...fullDoc,id:tempDr.regId,email:tempDr.email,phone:tempDr.phone,hospital:tempDr.hospital||"",hospitalAddress:tempDr.hospitalAddress||""};
+    setDocs(ds=>[...ds,doc]);setCurDrId(doc.id);
+    setToast({msg:"Welcome to CureLink, "+doc.name+"! 🎉",type:"new"});
+    setScreen("doctorDash");
+  };
+  const logoutUser=()=>{setCurUserRaw(null);setScreen("landing");};
+  const logoutDoctor=()=>{setCurDrId(null);setScreen("landing");};
+
+  return(
+    <div>
+      {toast&&<Toast msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
+      {screen==="landing"&&<Landing onChoice={c=>setScreen(c==="user"?"userLogin":"doctorLogin")}/>}
+      {screen==="userLogin"&&<PatientLogin onBack={()=>setScreen("landing")} onLogin={handleUserLogin}/>}
+      {screen==="doctorLogin"&&<DoctorLogin onBack={()=>setScreen("landing")} onLogin={handleDrLogin}/>}
+      {screen==="doctorSetup"&&tempDr&&<DoctorSetup loginInfo={tempDr} onComplete={handleSetupComplete}/>}
+      {screen==="userDash"&&curUser&&<PatientDash user={curUser} setUser={setUser} docs={docs} setDocs={setDocs} onLogout={logoutUser}/>}
+      {screen==="doctorDash"&&curDoc&&<DoctorDash loginInfo={curDoc} docs={docs} setDocs={setDocs} onLogout={logoutDoctor}/>}
+      {screen==="userDash"&&!curUser&&<Landing onChoice={c=>setScreen(c==="user"?"userLogin":"doctorLogin")}/>}
+      {screen==="doctorDash"&&!curDoc&&<Landing onChoice={c=>setScreen(c==="user"?"userLogin":"doctorLogin")}/>}
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
